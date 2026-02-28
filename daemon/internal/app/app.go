@@ -30,9 +30,15 @@ type App struct {
 	startedAt         time.Time
 	resolvedUIDistDir string
 	db                *db.Store
+	jobRepo           *jobs.Repository
+	runRepo           *runs.Repository
+	settingsRepo      *settings.Repository
+	eventsRepo        *events.Repository
 	scheduler         *scheduler.Service
 	runner            *runner.Service
 	maintenanceWorker *maintenance.Worker
+	heartbeatCancel   context.CancelFunc
+	heartbeatDone     chan struct{}
 	server            *http.Server
 }
 
@@ -100,6 +106,10 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 		startedAt:         startedAt,
 		resolvedUIDistDir: resolvedUIDir,
 		db:                store,
+		jobRepo:           jobRepo,
+		runRepo:           runRepo,
+		settingsRepo:      settingsRepo,
+		eventsRepo:        eventsRepo,
 		scheduler:         svc,
 		runner:            runnerSvc,
 		maintenanceWorker: maintenanceWorker,
@@ -108,9 +118,13 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 }
 
 func (a *App) Run() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	startupNow := time.Now().UTC()
+	if err := a.runStartupCatchup(ctx, startupNow); err != nil {
+		return err
+	}
 	if err := a.scheduler.Start(ctx); err != nil {
 		return err
 	}
@@ -120,6 +134,7 @@ func (a *App) Run() error {
 	if err := a.maintenanceWorker.Start(ctx); err != nil {
 		return err
 	}
+	a.startSchedulerHeartbeatLoop()
 
 	a.logger.Info("daemon started",
 		"version", version.BuildVersion,
@@ -144,9 +159,13 @@ func (a *App) Run() error {
 }
 
 func (a *App) Shutdown(ctx context.Context) error {
+	a.stopSchedulerHeartbeatLoop(ctx)
 	a.maintenanceWorker.Stop(ctx)
 	a.runner.Stop(ctx)
 	a.scheduler.Stop(ctx)
+	if err := a.persistSchedulerHeartbeat(ctx, time.Now().UTC()); err != nil {
+		a.logger.Warn("final scheduler heartbeat update failed", "error", err)
+	}
 	if err := a.server.Shutdown(ctx); err != nil {
 		return err
 	}

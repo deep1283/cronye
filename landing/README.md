@@ -9,6 +9,13 @@ npm run dev
 
 Default URL: `http://localhost:3000`
 
+If you ever hit a Next.js missing-chunk runtime error (for example `Cannot find module './638.js'`), run:
+
+```bash
+npm run clean
+npm run dev
+```
+
 Included sections:
 
 - Hero
@@ -34,6 +41,7 @@ DODO_PAYMENTS_ENVIRONMENT=test_mode
 DODO_PAYMENTS_API_KEY=dp_test_xxx
 DODO_PRODUCT_ID=pdt_xxx
 DODO_RETURN_URL_BASE=http://localhost:3000
+DODO_WEBHOOK_SECRET=whsec_xxx
 ```
 
 Optional signed license generation for success handoff:
@@ -43,3 +51,12 @@ CRONYE_LICENSE_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVA
 ```
 
 If `CRONYE_LICENSE_PRIVATE_KEY_PEM` is missing, success flow generates a `plain:` dev token.
+
+Webhook endpoint for Dodo:
+
+`POST /api/dodo/webhook`
+
+Set this URL in Dodo dashboard for your environment, for example:
+
+- local dev via tunnel: `https://<ngrok>.ngrok.io/api/dodo/webhook`
+- deployed: `https://<your-domain>/api/dodo/webhook`

@@ -5,6 +5,7 @@ Week 1 scope currently implemented:
 - Daemon lifecycle with graceful shutdown
 - SQLite bootstrap with WAL + migrations
 - Scheduler bootstrap that registers enabled jobs
+- Startup catch-up that replays missed cron windows since last scheduler heartbeat (deduped by `job_id + scheduled_at`)
 - Local API with `GET /health`
 - Job APIs: `GET /jobs`, `POST /jobs`, `GET /jobs/:id`, `PUT /jobs/:id`, `POST /jobs/:id/run`, `POST /jobs/:id/cancel-running`, `POST /jobs/:id/pause`, `POST /jobs/:id/resume`, `DELETE /jobs/:id`
 - Run APIs: `GET /jobs/:id/runs`, `GET /runs/:id`, `GET /runs/:id/output`
@@ -19,6 +20,7 @@ Week 1 scope currently implemented:
   - nightly retention purge (once per local calendar day)
   - periodic log-cap enforcement
   - weekly `VACUUM` (or earlier after large deletions)
+- Scheduler heartbeat persists every 30s to support downtime catch-up on restart
 
 ## Run locally
 

@@ -14,6 +14,7 @@ const (
 	KeyAlertWebhookURL         = "alert_webhook_url"
 	KeyMaintenanceLastRunAt    = "maintenance_last_run_at"
 	KeyMaintenanceLastVacuumAt = "maintenance_last_vacuum_at"
+	KeySchedulerHeartbeatAt    = "scheduler_heartbeat_at"
 	KeyLicenseToken            = "license_token"
 	KeyLicenseActivatedAt      = "license_activated_at"
 	KeyLicenseLastCheckedAt    = "license_last_checked_at"

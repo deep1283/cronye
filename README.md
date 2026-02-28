@@ -9,6 +9,7 @@ Reliable automations on your own machine, without cloud lock-in.
 ## MVP Scope
 
 - Cron scheduling
+- Startup catch-up for missed schedules after downtime
 - Shell and webhook jobs
 - Run logs, retries, retention, and cleanup controls
 - Local web UI served from daemon

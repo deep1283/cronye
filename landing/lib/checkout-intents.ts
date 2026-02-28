@@ -75,3 +75,30 @@ export async function updateIntent(
   await writeStore(store);
   return updated;
 }
+
+export async function listIntents(): Promise<CheckoutIntent[]> {
+  const store = await readStore();
+  return Object.values(store.intents);
+}
+
+export async function findIntentBySessionId(
+  sessionId: string
+): Promise<CheckoutIntent | null> {
+  const store = await readStore();
+  const normalized = sessionId.trim();
+  for (const intent of Object.values(store.intents)) {
+    if (intent.sessionId === normalized) return intent;
+  }
+  return null;
+}
+
+export async function findIntentByPaymentId(
+  paymentId: string
+): Promise<CheckoutIntent | null> {
+  const store = await readStore();
+  const normalized = paymentId.trim();
+  for (const intent of Object.values(store.intents)) {
+    if (intent.paymentId === normalized) return intent;
+  }
+  return null;
+}

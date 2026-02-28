@@ -61,6 +61,20 @@ func (r *Repository) CreateQueuedWithAttempt(ctx context.Context, jobID string, 
 	return r.GetByID(ctx, runID)
 }
 
+func (r *Repository) ExistsByJobAndScheduledAt(ctx context.Context, jobID string, scheduledAt time.Time) (bool, error) {
+	var count int
+	err := r.db.QueryRowContext(
+		ctx,
+		`SELECT COUNT(1) FROM job_runs WHERE job_id = ? AND scheduled_at = ?`,
+		jobID,
+		scheduledAt.UTC().Format(time.RFC3339Nano),
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *Repository) ClaimNextDue(ctx context.Context) (Record, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
