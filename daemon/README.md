@@ -22,12 +22,31 @@ Week 1 scope currently implemented:
 ## Run locally
 
 ```bash
+# from repo root, build local UI bundle first
+cd ui && npm run build
+
+# then run daemon
 cd daemon
 go run ./cmd/daemon
 ```
+
+Then open:
+
+- `http://127.0.0.1:9480` for the local UI (served by daemon)
+- API is available at both root paths (`/health`, `/jobs`, etc.) and `/api/*` aliases (`/api/health`, `/api/jobs`, etc.)
 
 Optional environment variables:
 
 - `CRONYE_ADDR` (default `127.0.0.1:9480`)
 - `CRONYE_DATA_DIR` (default `var`)
 - `CRONYE_DB_PATH` (default `<CRONYE_DATA_DIR>/cronye.db`)
+- `CRONYE_UI_DIST` (default `ui/dist`; daemon also tries `../ui/dist` fallback)
+
+## Release Bundle Runtime
+
+When launched from a release bundle, daemon auto-detects UI files at:
+
+- `<binary_dir>/ui/dist`
+- `<binary_dir>/../ui/dist`
+
+So the bundled `ui/dist` works without extra flags.

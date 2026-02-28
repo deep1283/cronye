@@ -10,3 +10,5 @@ ui/node_modules/
 
 landing/.next/
 landing/node_modules/
+
+dist/

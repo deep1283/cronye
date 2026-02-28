@@ -36,6 +36,8 @@ VITE_DAEMON_URL=http://127.0.0.1:9490 npm run dev
 npm run build
 ```
 
+The generated `dist/` is served by daemon in local production mode.
+
 ## Implemented MVP screens
 
 - Jobs list with quick actions (`run`, `pause/resume`, `delete`)

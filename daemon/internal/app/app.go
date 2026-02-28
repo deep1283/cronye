@@ -27,6 +27,7 @@ type App struct {
 	cfg               config.Config
 	logger            *slog.Logger
 	startedAt         time.Time
+	resolvedUIDistDir string
 	db                *db.Store
 	scheduler         *scheduler.Service
 	runner            *runner.Service
@@ -66,7 +67,7 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 	runnerSvc := runner.NewService(logger.With("component", "runner"), jobRepo, runRepo, alertsSvc, eventsRepo, outputDir)
 
 	startedAt := time.Now().UTC()
-	handler := api.NewRouter(api.Dependencies{
+	apiHandler := api.NewRouter(api.Dependencies{
 		Logger:            logger.With("component", "api"),
 		Store:             store,
 		Jobs:              jobRepo,
@@ -79,6 +80,7 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 		Scheduler:         svc,
 		StartedAt:         startedAt,
 	})
+	handler, resolvedUIDir := newHTTPHandler(apiHandler, cfg.UIDistDir)
 
 	server := &http.Server{
 		Addr:              cfg.Addr,
@@ -90,6 +92,7 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 		cfg:               cfg,
 		logger:            logger,
 		startedAt:         startedAt,
+		resolvedUIDistDir: resolvedUIDir,
 		db:                store,
 		scheduler:         svc,
 		runner:            runnerSvc,
@@ -116,10 +119,16 @@ func (a *App) Run() error {
 		"version", version.BuildVersion,
 		"addr", a.cfg.Addr,
 		"db_path", a.cfg.DBPath,
+		"ui_dist_dir", a.cfg.UIDistDir,
 		"registered_jobs", a.scheduler.RegisteredJobs(),
 		"runner_running", a.runner.Running(),
 		"maintenance_running", a.maintenanceWorker.Running(),
 	)
+	if a.resolvedUIDistDir == "" {
+		a.logger.Warn("ui dist not found; serving API only", "configured_ui_dist_dir", a.cfg.UIDistDir)
+	} else {
+		a.logger.Info("ui static files enabled", "resolved_ui_dist_dir", a.resolvedUIDistDir)
+	}
 
 	err := a.server.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {

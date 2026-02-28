@@ -14,6 +14,9 @@ const (
 	KeyAlertWebhookURL         = "alert_webhook_url"
 	KeyMaintenanceLastRunAt    = "maintenance_last_run_at"
 	KeyMaintenanceLastVacuumAt = "maintenance_last_vacuum_at"
+	KeyLicenseToken            = "license_token"
+	KeyLicenseActivatedAt      = "license_activated_at"
+	KeyLicenseLastCheckedAt    = "license_last_checked_at"
 )
 
 type Repository struct {
@@ -78,4 +81,9 @@ func (r *Repository) GetInt64(ctx context.Context, key string, fallback int64) (
 		return fallback, nil
 	}
 	return value, nil
+}
+
+func (r *Repository) Delete(ctx context.Context, key string) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM settings WHERE key = ?`, key)
+	return err
 }

@@ -59,6 +59,26 @@ Then check:
 curl http://127.0.0.1:9480/health
 ```
 
+## Build Synced Release Bundle (UI + Daemon)
+
+```bash
+make release VERSION=0.1.0
+```
+
+This command:
+
+- builds `ui/dist`
+- runs daemon tests
+- builds daemon binary with version ldflag
+- bundles everything into `dist/release/<version>-<goos>-<goarch>/`
+
+Bundle layout:
+
+- `cronye-daemon` (or `.exe`)
+- `ui/dist/*`
+- `checksums.txt`
+- `README-daemon.md`
+
 ## Performance Targets
 
 - Idle RAM: < 80 MB
