@@ -1,0 +1,12 @@
+*.log
+.DS_Store
+
+daemon/bin/
+daemon/var/
+daemon/.cache/
+
+ui/dist/
+ui/node_modules/
+
+landing/.next/
+landing/node_modules/
