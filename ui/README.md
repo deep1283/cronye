@@ -44,4 +44,4 @@ The generated `dist/` is served by daemon in local production mode.
 - Job editor (`shell` / `http`, cron, timezone, timeout, retry, overlap policy)
 - Run history with status filter and output viewer
 - Storage dashboard with purge controls
-- Settings for retention/log cap/concurrency and alert webhook
+- Settings for retention/log cap/concurrency, alert webhook, and local license activation/status

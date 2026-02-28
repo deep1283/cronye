@@ -97,6 +97,19 @@ export interface HealthResponse {
   uptime_sec: number;
 }
 
+export interface LicenseStatus {
+  active: boolean;
+  status: string;
+  message?: string;
+  device_id: string;
+  license_id?: string;
+  email?: string;
+  plan?: string;
+  activated_at?: string;
+  last_checked_at?: string;
+  expires_at?: string;
+}
+
 export interface JobUpsertPayload {
   name: string;
   type: JobType;

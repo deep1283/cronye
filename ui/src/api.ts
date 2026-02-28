@@ -3,6 +3,7 @@ import type {
   HealthResponse,
   Job,
   JobUpsertPayload,
+  LicenseStatus,
   PurgePayload,
   PurgeResult,
   RetentionPayload,
@@ -91,6 +92,16 @@ export const api = {
     request<{ alert_webhook_url: string }>("/settings/alerts", {
       method: "PUT",
       body: JSON.stringify({ alert_webhook_url: alertWebhookURL })
+    }),
+  getLicense: () => request<LicenseStatus>("/license"),
+  activateLicense: (licenseKey: string) =>
+    request<LicenseStatus>("/license/activate", {
+      method: "POST",
+      body: JSON.stringify({ license_key: licenseKey })
+    }),
+  deactivateLicense: () =>
+    request<{ status: string }>("/license/deactivate", {
+      method: "POST"
     })
 };
 

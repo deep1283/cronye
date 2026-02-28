@@ -67,7 +67,7 @@
 
 ### Build
 - Next.js landing page
-- Stripe checkout for one-time `$39`
+- Dodo Payments checkout for one-time `$39`
 - License generation and activation UI
 - Docs: install/troubleshooting/retention tuning
 

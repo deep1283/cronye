@@ -3,8 +3,13 @@
 Base URL: `http://127.0.0.1:<port>`
 
 Current implementation status:
-- Implemented: `GET /health`, `GET /jobs`, `POST /jobs`, `GET /jobs/:id`, `PUT /jobs/:id`, `POST /jobs/:id/run`, `POST /jobs/:id/cancel-running`, `POST /jobs/:id/pause`, `POST /jobs/:id/resume`, `DELETE /jobs/:id`, `GET /jobs/:id/runs`, `GET /runs/:id`, `GET /runs/:id/output`, `POST /maintenance/purge`, `GET /storage/usage`, `PUT /settings/retention`, `GET /settings`, `PUT /settings/alerts`
+- Implemented: `GET /health`, `GET /jobs`, `POST /jobs`, `GET /jobs/:id`, `PUT /jobs/:id`, `POST /jobs/:id/run`, `POST /jobs/:id/cancel-running`, `POST /jobs/:id/pause`, `POST /jobs/:id/resume`, `DELETE /jobs/:id`, `GET /jobs/:id/runs`, `GET /runs/:id`, `GET /runs/:id/output`, `POST /maintenance/purge`, `GET /storage/usage`, `PUT /settings/retention`, `GET /settings`, `PUT /settings/alerts`, `GET /license`, `POST /license/activate`, `POST /license/deactivate`
 - Planned: remaining endpoints in MVP contract
+
+API routes are available at both root paths and `/api/*` aliases.
+Examples:
+- `/health` and `/api/health`
+- `/jobs` and `/api/jobs`
 
 ## Health
 
@@ -130,6 +135,24 @@ Request body:
   "alert_webhook_url": "https://example.com/webhook"
 }
 ```
+
+## License
+
+### `GET /license`
+Get current license state for this device.
+
+### `POST /license/activate`
+Activate signed license token.
+
+Request body:
+```json
+{
+  "license_key": "cronye1.<payload>.<signature>"
+}
+```
+
+### `POST /license/deactivate`
+Deactivate and clear local license token for this device.
 
 ## Status values
 

@@ -30,7 +30,7 @@
 
 ## Commercial and Legal
 
-- [ ] Stripe one-time `$39` checkout live
+- [ ] Dodo Payments one-time `$39` checkout live
 - [ ] License generation and activation verified
 - [ ] Offline grace period behavior validated
 - [ ] EULA, refund policy, and support scope published

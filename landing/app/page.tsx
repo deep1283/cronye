@@ -91,7 +91,7 @@ export default function HomePage() {
             No cloud lock-in. No remote runtime.
           </p>
           <div className="cta-row">
-            <a className="btn btn-primary" href="#pricing">
+            <a className="btn btn-primary" href="/checkout">
               Buy for $39
             </a>
             <a className="btn btn-secondary" href="#waitlist">
@@ -152,7 +152,7 @@ export default function HomePage() {
               <li>Retries, logging, retention, and purge controls</li>
               <li>No telemetry by default</li>
             </ul>
-            <a className="btn btn-primary" href="#">
+            <a className="btn btn-primary" href="/checkout">
               Buy now
             </a>
           </article>
@@ -180,7 +180,7 @@ export default function HomePage() {
             Get launch onboarding, setup docs, and direct support for early users.
           </p>
           <div className="cta-row">
-            <a className="btn btn-primary" href="#">
+            <a className="btn btn-primary" href="/checkout">
               Buy for $39
             </a>
             <a className="btn btn-secondary" href="mailto:hello@cronye.app">

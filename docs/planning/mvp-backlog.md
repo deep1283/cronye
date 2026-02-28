@@ -63,7 +63,7 @@
   - Recovery policy restarts daemon after crash.
 
 ### EPIC-9 Licensing + Checkout
-- Stripe one-time checkout for `$39`.
+- Dodo Payments one-time checkout for `$39`.
 - License key generation and local activation flow.
 - Acceptance criteria:
   - Purchase -> key generation -> activation works end-to-end.

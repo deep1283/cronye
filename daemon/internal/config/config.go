@@ -15,14 +15,14 @@ const (
 )
 
 type Config struct {
-	Addr                     string
-	DataDir                  string
-	DBPath                   string
-	UIDistDir                string
-	ServiceName              string
-	ServiceLabel             string
-	LicensePublicKey         string
-	LicenseAllowUnsignedDev  bool
+	Addr                    string
+	DataDir                 string
+	DBPath                  string
+	UIDistDir               string
+	ServiceName             string
+	ServiceLabel            string
+	LicensePublicKey        string
+	LicenseAllowUnsignedDev bool
 }
 
 func FromEnv() Config {

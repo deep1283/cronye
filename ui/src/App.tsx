@@ -4,6 +4,7 @@ import type {
   Job,
   JobType,
   JobUpsertPayload,
+  LicenseStatus,
   OverlapPolicy,
   Run,
   Settings,
@@ -135,6 +136,7 @@ function App() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [storage, setStorage] = useState<StorageUsage | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [runOutput, setRunOutput] = useState<string>("");
@@ -151,6 +153,7 @@ function App() {
     global_concurrency: 1 as 1 | 2
   });
   const [alertWebhookDraft, setAlertWebhookDraft] = useState<string>("");
+  const [licenseKeyDraft, setLicenseKeyDraft] = useState<string>("");
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
@@ -202,11 +205,17 @@ function App() {
     setAlertWebhookDraft(currentSettings.alert_webhook_url ?? "");
   }, []);
 
+  const loadLicense = useCallback(async () => {
+    const status = await api.getLicense();
+    setLicenseStatus(status);
+  }, []);
+
   const loadAll = useCallback(async () => {
     setBusy(true);
     setNotice(null);
     try {
       await Promise.all([loadHealth(), loadJobs(), loadStorage(), loadSettings()]);
+      await loadLicense();
       if (selectedJobId) {
         await loadRuns(selectedJobId);
       }
@@ -215,7 +224,7 @@ function App() {
     } finally {
       setBusy(false);
     }
-  }, [loadHealth, loadJobs, loadRuns, loadSettings, loadStorage, selectedJobId]);
+  }, [loadHealth, loadJobs, loadLicense, loadRuns, loadSettings, loadStorage, selectedJobId]);
 
   useEffect(() => {
     void loadAll();
@@ -459,6 +468,37 @@ function App() {
       setBusy(false);
     }
   }, [alertWebhookDraft, settingsDraft]);
+
+  const onActivateLicense = useCallback(async () => {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const status = await api.activateLicense(licenseKeyDraft.trim());
+      setLicenseStatus(status);
+      setLicenseKeyDraft("");
+      setNotice({ type: "info", text: "license_activated" });
+    } catch (error) {
+      setNotice({ type: "error", text: parseAPIError(error) });
+      await loadLicense();
+    } finally {
+      setBusy(false);
+    }
+  }, [licenseKeyDraft, loadLicense]);
+
+  const onDeactivateLicense = useCallback(async () => {
+    if (!window.confirm("Deactivate this device license?")) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await api.deactivateLicense();
+      await loadLicense();
+      setNotice({ type: "info", text: "license_deactivated" });
+    } catch (error) {
+      setNotice({ type: "error", text: parseAPIError(error) });
+    } finally {
+      setBusy(false);
+    }
+  }, [loadLicense]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_90%_5%,#d4ede9,transparent_28%),radial-gradient(circle_at_10%_20%,#dce7f5,transparent_30%),#eef4f8] text-ink">
@@ -1038,6 +1078,47 @@ function App() {
                 <p className="mt-2 text-xs text-slate">
                   Current: {settings?.alert_webhook_url ? settings.alert_webhook_url : "(not set)"}
                 </p>
+              </div>
+
+              <div className="mt-5 border-t border-edge pt-4">
+                <h3 className="mb-2 text-sm font-semibold">License</h3>
+                <p className="text-xs text-slate">
+                  Status: {licenseStatus?.status ?? "unknown"} • Device: {licenseStatus?.device_id ?? "-"}
+                </p>
+                {licenseStatus?.active && (
+                  <p className="mt-1 text-xs text-slate">
+                    {licenseStatus.email} • {licenseStatus.plan} • expires {formatDate(licenseStatus.expires_at)}
+                  </p>
+                )}
+
+                <label className="mt-3 block text-sm">
+                  <span className="mb-1 block text-slate">Activate license key</span>
+                  <textarea
+                    className="min-h-24 w-full rounded-xl border border-edge px-3 py-2 font-mono text-xs"
+                    value={licenseKeyDraft}
+                    onChange={(event) => setLicenseKeyDraft(event.target.value)}
+                    placeholder="paste license key"
+                  />
+                </label>
+
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accentStrong"
+                    onClick={() => void onActivateLicense()}
+                    disabled={busy}
+                  >
+                    Activate
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-danger hover:bg-red-50"
+                    onClick={() => void onDeactivateLicense()}
+                    disabled={busy}
+                  >
+                    Deactivate
+                  </button>
+                </div>
               </div>
             </section>
           )}

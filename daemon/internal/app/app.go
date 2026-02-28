@@ -15,6 +15,7 @@ import (
 	"github.com/cronye/daemon/internal/db"
 	"github.com/cronye/daemon/internal/events"
 	"github.com/cronye/daemon/internal/jobs"
+	"github.com/cronye/daemon/internal/license"
 	"github.com/cronye/daemon/internal/maintenance"
 	"github.com/cronye/daemon/internal/runner"
 	"github.com/cronye/daemon/internal/runs"
@@ -52,6 +53,10 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 	runRepo := runs.NewRepository(store.DB)
 	settingsRepo := settings.NewRepository(store.DB)
 	eventsRepo := events.NewRepository(store.DB)
+	licenseSvc, err := license.NewService(logger.With("component", "license"), settingsRepo, cfg)
+	if err != nil {
+		return nil, err
+	}
 	maintenanceSvc := maintenance.NewService(store.DB)
 	maintenanceWorker := maintenance.NewWorker(logger.With("component", "maintenance"), maintenanceSvc, settingsRepo, eventsRepo)
 	alertsSvc := alerts.NewService(logger.With("component", "alerts"), settingsRepo)
@@ -76,6 +81,7 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 		MaintenanceWorker: maintenanceWorker,
 		Events:            eventsRepo,
 		Runner:            runnerSvc,
+		License:           licenseSvc,
 		Settings:          settingsRepo,
 		Scheduler:         svc,
 		StartedAt:         startedAt,

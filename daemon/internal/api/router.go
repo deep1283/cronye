@@ -14,6 +14,7 @@ import (
 
 	"github.com/cronye/daemon/internal/db"
 	"github.com/cronye/daemon/internal/jobs"
+	"github.com/cronye/daemon/internal/license"
 	"github.com/cronye/daemon/internal/maintenance"
 	"github.com/cronye/daemon/internal/runs"
 	"github.com/cronye/daemon/internal/settings"
@@ -47,6 +48,12 @@ type EventLogger interface {
 	Log(ctx context.Context, level, category, message string, meta any) error
 }
 
+type LicenseControl interface {
+	Status(ctx context.Context) (license.Status, error)
+	Activate(ctx context.Context, token string) (license.Status, error)
+	Deactivate(ctx context.Context) error
+}
+
 type Dependencies struct {
 	Logger            *slog.Logger
 	Store             *db.Store
@@ -56,6 +63,7 @@ type Dependencies struct {
 	MaintenanceWorker MaintenanceControl
 	Events            EventLogger
 	Runner            RunnerControl
+	License           LicenseControl
 	Settings          *settings.Repository
 	Scheduler         SchedulerInfo
 	StartedAt         time.Time
@@ -87,6 +95,10 @@ type retentionRequest struct {
 
 type alertsRequest struct {
 	AlertWebhookURL string `json:"alert_webhook_url"`
+}
+
+type activateLicenseRequest struct {
+	LicenseKey string `json:"license_key"`
 }
 
 func NewRouter(deps Dependencies) http.Handler {
@@ -133,6 +145,14 @@ func NewRouter(deps Dependencies) http.Handler {
 		if deps.MaintenanceWorker != nil {
 			resp["maintenance"] = map[string]any{
 				"running": deps.MaintenanceWorker.Running(),
+			}
+		}
+		if deps.License != nil {
+			if licenseStatus, err := deps.License.Status(r.Context()); err == nil {
+				resp["license"] = map[string]any{
+					"active": licenseStatus.Active,
+					"status": licenseStatus.Status,
+				}
 			}
 		}
 
@@ -655,6 +675,67 @@ func NewRouter(deps Dependencies) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"alert_webhook_url": url,
 		})
+	})
+
+	r.Get("/license", func(w http.ResponseWriter, r *http.Request) {
+		if deps.License == nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "license_unavailable"})
+			return
+		}
+		status, err := deps.License.Status(r.Context())
+		if err != nil {
+			deps.Logger.Error("license status failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		writeJSON(w, http.StatusOK, status)
+	})
+
+	r.Post("/license/activate", func(w http.ResponseWriter, r *http.Request) {
+		if deps.License == nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "license_unavailable"})
+			return
+		}
+
+		var req activateLicenseRequest
+		if err := decodeJSON(r, &req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+
+		status, err := deps.License.Activate(r.Context(), req.LicenseKey)
+		if err != nil {
+			emitEvent(r.Context(), deps, "warn", "license", "license_activation_failed", map[string]any{
+				"status":  status.Status,
+				"message": status.Message,
+			})
+			writeJSON(w, http.StatusBadRequest, map[string]any{
+				"error":  err.Error(),
+				"status": status,
+			})
+			return
+		}
+
+		emitEvent(r.Context(), deps, "info", "license", "license_activated", map[string]any{
+			"license_id": status.LicenseID,
+			"email":      status.Email,
+			"plan":       status.Plan,
+		})
+		writeJSON(w, http.StatusOK, status)
+	})
+
+	r.Post("/license/deactivate", func(w http.ResponseWriter, r *http.Request) {
+		if deps.License == nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "license_unavailable"})
+			return
+		}
+		if err := deps.License.Deactivate(r.Context()); err != nil {
+			deps.Logger.Error("license deactivate failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		emitEvent(r.Context(), deps, "warn", "license", "license_deactivated", nil)
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deactivated"})
 	})
 
 	return r

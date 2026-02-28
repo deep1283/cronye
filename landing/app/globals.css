@@ -274,6 +274,105 @@ p {
   background: color-mix(in srgb, var(--surface) 80%, white);
 }
 
+.checkout-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.checkout-card {
+  width: min(700px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface) 88%, white);
+  padding: 1.35rem;
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.checkout-card h1 {
+  max-width: none;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+}
+
+.checkout-form {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.checkout-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.checkout-form input,
+.checkout-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  background: #fff;
+  font: inherit;
+}
+
+.checkout-form button {
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkout-form button[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.status-stack {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.status-stack code {
+  padding: 0.12rem 0.35rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent-soft) 45%, white);
+}
+
+.license-box {
+  margin-top: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.9rem;
+  background: color-mix(in srgb, var(--surface) 74%, white);
+}
+
+.license-box textarea {
+  margin-top: 0.5rem;
+  min-height: 120px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+.small-note {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.error-line {
+  margin-top: 0.75rem;
+  color: #a53d31;
+  font-weight: 600;
+}
+
 @keyframes rise {
   from {
     opacity: 0;

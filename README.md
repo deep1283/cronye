@@ -42,8 +42,8 @@ Non-goals in MVP:
 ## Repo Layout
 
 - `daemon/` Go daemon and localhost API
-- `ui/` local web app (planned)
-- `landing/` Next.js marketing site (planned)
+- `ui/` local web app (Vite + React + Tailwind)
+- `landing/` Next.js marketing site
 - `docs/` implementation and launch docs
 
 ## Getting Started (Daemon)
@@ -75,9 +75,37 @@ This command:
 Bundle layout:
 
 - `cronye-daemon` (or `.exe`)
+- `cronye-licensegen` (or `.exe`)
 - `ui/dist/*`
 - `checksums.txt`
 - `README-daemon.md`
+
+Optional signed host build:
+
+```bash
+make release-signed VERSION=0.1.0 SIGNING_KEY_PATH=/abs/path/private.pem
+```
+
+Host target release-all helper:
+
+```bash
+make release-all VERSION=0.1.0
+```
+
+Cross-OS matrix helper (typically for CI with native runners):
+
+```bash
+make release-matrix VERSION=0.1.0
+```
+
+## Service Commands
+
+From a built daemon binary:
+
+```bash
+./cronye-daemon service install
+./cronye-daemon service uninstall
+```
 
 ## Performance Targets
 
@@ -90,3 +118,4 @@ Bundle layout:
 
 - MVP: `$39` one-time (cron product only)
 - AI add-on deferred to post-MVP (v1.1/v1.2)
+- Payment provider integration is deferred and will use Dodo Payments (not Stripe)

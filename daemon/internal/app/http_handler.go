@@ -14,6 +14,7 @@ var rootAPIPrefixes = []string{
 	"/maintenance",
 	"/storage",
 	"/settings",
+	"/license",
 }
 
 func newHTTPHandler(apiHandler http.Handler, uiDistDir string) (http.Handler, string) {
