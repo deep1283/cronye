@@ -155,7 +155,7 @@ export default function CheckoutPage() {
         <p className="eyebrow">Cronye checkout</p>
         <h1>Start test purchase</h1>
         <p className="lead">
-          You will be redirected to Dodo test checkout for the $39 lifetime plan.
+          You will be redirected to Dodo test checkout for the $9 lifetime plan.
         </p>
 
         <div className="checkout-identity">

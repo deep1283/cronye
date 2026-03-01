@@ -132,10 +132,11 @@ p {
   background: rgba(56, 189, 248, 0.08);
 }
 
-.brand-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--blue);
+.brand-icon-image {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  object-fit: cover;
 }
 
 .nav-links {

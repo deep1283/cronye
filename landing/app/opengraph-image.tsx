@@ -44,7 +44,7 @@ export default function OpenGraphImage() {
               fontFamily: "sans-serif"
             }}
           >
-            Local-first cron jobs. Shell + webhook. $39 lifetime.
+            Local-first cron jobs. Shell + webhook. $9 lifetime.
           </div>
         </div>
       </div>

@@ -20,7 +20,7 @@ Included sections:
 - Hero
 - Features
 - Performance
-- Pricing (`$39` lifetime)
+- Pricing (`$9` lifetime)
 - FAQ
 - CTA
 

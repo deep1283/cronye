@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
 import type { ReactNode, SVGProps } from "react";
 
@@ -48,7 +49,7 @@ const faqItems: Faq[] = [
     a: "No. Jobs run when the daemon is running. On restart, startup catch-up can replay missed windows."
   },
   {
-    q: "What does the $39 plan include?",
+    q: "What does the $9 plan include?",
     a: "Lifetime access to the local cron product: scheduler, retries, logs, retention, and cleanup controls."
   },
   {
@@ -91,15 +92,6 @@ function FadeIn({
     >
       {children}
     </motion.div>
-  );
-}
-
-function LogoMark(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path d="M4 16V8L12 4L20 8V16L12 20L4 16Z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 4V20M4 8L12 12L20 8" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
   );
 }
 
@@ -208,7 +200,13 @@ export default function HomePage() {
         <div className="container nav-inner">
           <a className="brand" href="#top">
             <span className="brand-icon-wrap">
-              <LogoMark className="brand-icon" />
+              <Image
+                src="/branding/mascot.png"
+                alt="Cronye mascot logo"
+                width={24}
+                height={24}
+                className="brand-icon-image"
+              />
             </span>
             <span>Cronye</span>
           </a>
@@ -468,13 +466,13 @@ Initializing Cronye daemon...
       <section id="pricing" className="section">
         <div className="container pricing-shell">
           <FadeIn>
-            <p className="eyebrow">Simple pricing</p>
-            <h2>One-time payment. Own your runtime.</h2>
+              <p className="eyebrow">Simple pricing</p>
+              <h2>One-time payment. Own your runtime.</h2>
           </FadeIn>
 
           <FadeIn delay={0.05}>
             <article className="price-card">
-              <p className="price-amount">$39</p>
+              <p className="price-amount">$9</p>
               <p className="price-sub">Lifetime plan for Cronye local cron product.</p>
               <ul>
                 <li>Shell and HTTP jobs</li>
@@ -515,7 +513,13 @@ Initializing Cronye daemon...
         <div className="container footer-inner">
           <a className="brand" href="#top">
             <span className="brand-icon-wrap">
-              <LogoMark className="brand-icon" />
+              <Image
+                src="/branding/mascot.png"
+                alt="Cronye mascot logo"
+                width={24}
+                height={24}
+                className="brand-icon-image"
+              />
             </span>
             <span>Cronye</span>
           </a>
