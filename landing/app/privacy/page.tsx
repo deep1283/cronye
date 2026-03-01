@@ -37,8 +37,12 @@ export default function PrivacyPage() {
         <div className="policy-section">
           <h2>Contact</h2>
           <p>
-            For support with license recovery or account updates, contact the support channel listed
-            on the Cronye website.
+            For help, support, or complaints, email{" "}
+            <a href="mailto:deepmishra1283@gmail.com">deepmishra1283@gmail.com</a> or message{" "}
+            <a href="https://x.com/deepmishra1283" target="_blank" rel="noreferrer">
+              @deepmishra1283 on X
+            </a>
+            .
           </p>
         </div>
       </section>

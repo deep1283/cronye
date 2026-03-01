@@ -36,8 +36,13 @@ export default function TermsPage() {
         <div className="policy-section">
           <h2>Support</h2>
           <p>
-            We provide help for checkout and license access. Product setup and operating environment
-            remain under your control on your system.
+            We provide help for checkout and license access. For help, support, or complaints,
+            email <a href="mailto:deepmishra1283@gmail.com">deepmishra1283@gmail.com</a> or
+            message{" "}
+            <a href="https://x.com/deepmishra1283" target="_blank" rel="noreferrer">
+              @deepmishra1283 on X
+            </a>
+            .
           </p>
         </div>
       </section>
