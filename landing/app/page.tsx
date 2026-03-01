@@ -253,8 +253,7 @@ export default function HomePage() {
                 Automate <span>locally</span>, run reliably.
               </h1>
               <p className="hero-lead">
-                Local-first cron automation daemon built in Go, with deterministic scheduling, structured logs,
-                retries, and retention controls.
+                Run scheduled jobs on your own system with reliable timing, clear logs, retries, and easy cleanup.
               </p>
 
               <div className="hero-actions">
@@ -352,7 +351,7 @@ export default function HomePage() {
                 >
                   <rect x="244" y="96" width="72" height="46" rx="8" />
                   <text x="280" y="124">
-                    SHELL
+                    JOBS
                   </text>
                 </motion.g>
                 <motion.g
@@ -364,7 +363,7 @@ export default function HomePage() {
                 >
                   <rect x="116" y="360" width="88" height="46" rx="8" />
                   <text x="160" y="388">
-                    HTTP
+                    TRIGGERS
                   </text>
                 </motion.g>
                 <motion.g
@@ -376,7 +375,7 @@ export default function HomePage() {
                 >
                   <rect x="356" y="360" width="88" height="46" rx="8" />
                   <text x="400" y="388">
-                    SQLITE
+                    HISTORY
                   </text>
                 </motion.g>
               </svg>
