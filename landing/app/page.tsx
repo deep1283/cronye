@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "motion/react";
-import type { ReactNode, SVGProps } from "react";
+import type { CSSProperties, ReactNode, SVGProps } from "react";
 
 type Feature = {
   title: string;
@@ -107,15 +106,14 @@ function FadeIn({
   children: ReactNode;
   delay?: number;
 }>) {
+  const style: CSSProperties = {
+    animationDelay: `${delay}s`
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay }}
-    >
+    <div className="fade-in" style={style}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -285,99 +283,35 @@ export default function HomePage() {
               </div>
 
               <svg className="system-orbit" viewBox="0 0 560 560" fill="none" aria-hidden="true">
-                <motion.circle
-                  cx="280"
-                  cy="280"
-                  r="218"
-                  className="ring faint"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                />
-                <motion.circle
-                  cx="280"
-                  cy="280"
-                  r="170"
-                  className="ring"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                />
-                <motion.circle
-                  cx="280"
-                  cy="280"
-                  r="118"
-                  className="ring faint"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                />
+                <circle cx="280" cy="280" r="218" className="ring faint ring-spin ring-spin-slow" />
+                <circle cx="280" cy="280" r="170" className="ring ring-spin ring-spin-reverse ring-spin-medium" />
+                <circle cx="280" cy="280" r="118" className="ring faint ring-spin ring-spin-fast" />
 
-                <motion.path
-                  d="M280 214V124"
-                  className="link"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.4 }}
-                  transition={{ duration: 1.5, delay: 0.5 }}
-                />
-                <motion.path
-                  d="M236 306L154 360"
-                  className="link"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.4 }}
-                  transition={{ duration: 1.5, delay: 0.7 }}
-                />
-                <motion.path
-                  d="M324 306L406 360"
-                  className="link"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 0.4 }}
-                  transition={{ duration: 1.5, delay: 0.9 }}
-                />
+                <path d="M280 214V124" className="link link-appear link-delay-a" />
+                <path d="M236 306L154 360" className="link link-appear link-delay-b" />
+                <path d="M324 306L406 360" className="link link-appear link-delay-c" />
 
                 <circle cx="280" cy="280" r="76" className="core-shell" />
-                <motion.circle
-                  cx="280"
-                  cy="280"
-                  r="10"
-                  className="core-dot"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
+                <circle cx="280" cy="280" r="10" className="core-dot" />
 
-                <motion.g
-                  className="node"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.5, delay: 1.2 }}
-                >
+                <g className="node node-reveal node-delay-a">
                   <rect x="244" y="96" width="72" height="46" rx="8" />
                   <text x="280" y="124">
                     JOBS
                   </text>
-                </motion.g>
-                <motion.g
-                  className="node"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.5, delay: 1.4 }}
-                >
+                </g>
+                <g className="node node-reveal node-delay-b">
                   <rect x="116" y="360" width="88" height="46" rx="8" />
                   <text x="160" y="388">
                     TRIGGERS
                   </text>
-                </motion.g>
-                <motion.g
-                  className="node"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.5, delay: 1.6 }}
-                >
+                </g>
+                <g className="node node-reveal node-delay-c">
                   <rect x="356" y="360" width="88" height="46" rx="8" />
                   <text x="400" y="388">
                     HISTORY
                   </text>
-                </motion.g>
+                </g>
               </svg>
             </div>
           </FadeIn>

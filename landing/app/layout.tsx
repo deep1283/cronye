@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: "Cronye | Premium Cron Automation",
   description:
     "A premium, local-first automation daemon engineered in Go. Control your ecosystem with precision timing, beautiful logs, and zero latency.",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    shortcut: ["/icon.png"],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }]
+  },
   openGraph: {
     title: "Cronye | Premium Cron Automation",
     description:

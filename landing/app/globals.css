@@ -220,6 +220,12 @@ p {
   align-items: center;
 }
 
+.fade-in {
+  opacity: 0;
+  transform: translateY(18px);
+  animation: fadeSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .hero-copy {
   position: relative;
   z-index: 2;
@@ -376,10 +382,50 @@ p {
   stroke: rgba(148, 163, 184, 0.18);
 }
 
+.system-orbit .ring-spin {
+  transform-origin: 280px 280px;
+  animation: orbitSpin 60s linear infinite;
+}
+
+.system-orbit .ring-spin-slow {
+  animation-duration: 60s;
+}
+
+.system-orbit .ring-spin-medium {
+  animation-duration: 40s;
+}
+
+.system-orbit .ring-spin-fast {
+  animation-duration: 25s;
+}
+
+.system-orbit .ring-spin-reverse {
+  animation-direction: reverse;
+}
+
 .system-orbit .link {
   stroke: rgba(56, 189, 248, 0.52);
   stroke-width: 1;
   stroke-linecap: round;
+}
+
+.system-orbit .link-appear {
+  opacity: 0;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: orbitLinkIn 1.5s ease forwards;
+}
+
+.system-orbit .link-delay-a {
+  animation-delay: 0.5s;
+}
+
+.system-orbit .link-delay-b {
+  animation-delay: 0.7s;
+}
+
+.system-orbit .link-delay-c {
+  animation-delay: 0.9s;
 }
 
 .system-orbit .core-shell {
@@ -390,6 +436,18 @@ p {
 
 .system-orbit .core-dot {
   fill: #38bdf8;
+  transform-origin: 280px 280px;
+  animation: orbitCorePulse 2s ease-in-out infinite;
+}
+
+.system-orbit .node {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.system-orbit .node:hover {
+  transform: scale(1.05);
 }
 
 .system-orbit .node rect {
@@ -403,6 +461,23 @@ p {
   text-anchor: middle;
   letter-spacing: 0.07em;
   font-family: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+}
+
+.system-orbit .node-reveal {
+  opacity: 0;
+  animation: orbitNodeReveal 0.5s ease forwards;
+}
+
+.system-orbit .node-delay-a {
+  animation-delay: 1.2s;
+}
+
+.system-orbit .node-delay-b {
+  animation-delay: 1.4s;
+}
+
+.system-orbit .node-delay-c {
+  animation-delay: 1.6s;
 }
 
 .section {
@@ -1348,5 +1423,58 @@ p {
   100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.9;
+  }
+}
+
+@keyframes fadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes orbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbitLinkIn {
+  to {
+    opacity: 0.4;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes orbitCorePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes orbitNodeReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
