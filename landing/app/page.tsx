@@ -26,6 +26,11 @@ type DownloadOption = {
   href: string;
 };
 
+type GettingStartedStep = {
+  title: string;
+  body: string;
+};
+
 const features: Feature[] = [
   {
     title: "Reliable Execution",
@@ -81,10 +86,33 @@ const founderBenefits: FounderBenefit[] = [
   }
 ];
 
+const gettingStartedSteps: GettingStartedStep[] = [
+  {
+    title: "Download and install",
+    body: "Pick your operating system above, download Cronye, and install it like a normal desktop app."
+  },
+  {
+    title: "Get your license key",
+    body: "Open checkout, complete the one-time payment, and copy your key from the success screen."
+  },
+  {
+    title: "Activate inside Cronye",
+    body: "Open the app, go to Settings → License, paste the key, and click Activate."
+  },
+  {
+    title: "Create your first automation",
+    body: "Add a job, choose when it should run, and enter the action you want Cronye to perform."
+  },
+  {
+    title: "Monitor results anytime",
+    body: "Keep Cronye running, then check History to see what ran, what succeeded, and what needs attention."
+  }
+];
+
 const downloadOptions: DownloadOption[] = [
   {
     os: "macOS",
-    note: "Works on all modern Macs",
+    note: "Works on Apple Silicon Macs",
     href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_MAC?.trim() || "/api/download/macos"
   },
   {
@@ -274,45 +302,15 @@ export default function HomePage() {
           </FadeIn>
 
           <FadeIn delay={0.06}>
-            <div className="hero-visual">
-              <div className="liquid-ether" aria-hidden="true">
-                <span className="ether-blob ether-a" />
-                <span className="ether-blob ether-b" />
-                <span className="ether-blob ether-c" />
-                <span className="ether-hole" />
-              </div>
-
-              <svg className="system-orbit" viewBox="0 0 560 560" fill="none" aria-hidden="true">
-                <circle cx="280" cy="280" r="218" className="ring faint ring-spin ring-spin-slow" />
-                <circle cx="280" cy="280" r="170" className="ring ring-spin ring-spin-reverse ring-spin-medium" />
-                <circle cx="280" cy="280" r="118" className="ring faint ring-spin ring-spin-fast" />
-
-                <path d="M280 214V124" className="link link-appear link-delay-a" />
-                <path d="M236 306L154 360" className="link link-appear link-delay-b" />
-                <path d="M324 306L406 360" className="link link-appear link-delay-c" />
-
-                <circle cx="280" cy="280" r="76" className="core-shell" />
-                <circle cx="280" cy="280" r="10" className="core-dot" />
-
-                <g className="node node-reveal node-delay-a">
-                  <rect x="244" y="96" width="72" height="46" rx="8" />
-                  <text x="280" y="124">
-                    JOBS
-                  </text>
-                </g>
-                <g className="node node-reveal node-delay-b">
-                  <rect x="116" y="360" width="88" height="46" rx="8" />
-                  <text x="160" y="388">
-                    TRIGGERS
-                  </text>
-                </g>
-                <g className="node node-reveal node-delay-c">
-                  <rect x="356" y="360" width="88" height="46" rx="8" />
-                  <text x="400" y="388">
-                    HISTORY
-                  </text>
-                </g>
-              </svg>
+            <div className="hero-logo-only">
+              <Image
+                src="/branding/mascot.png"
+                alt="Cronye mascot logo"
+                width={420}
+                height={420}
+                className="hero-logo-image"
+                priority
+              />
             </div>
           </FadeIn>
         </div>
@@ -413,32 +411,34 @@ export default function HomePage() {
       <section id="docs" className="section section-alt">
         <div className="container docs-shell">
           <FadeIn>
-            <p className="eyebrow">Zero-config deployment</p>
-            <h2>Start daemon in seconds</h2>
+            <p className="eyebrow">Getting started</p>
+            <h2>How to start and use Cronye</h2>
             <p className="section-lead">
-              Launch locally, create jobs, and monitor status from the browser on localhost.
+              Follow these simple steps to set up Cronye and run your first automation with confidence.
             </p>
           </FadeIn>
 
-          <FadeIn delay={0.05}>
-            <article className="terminal-card" aria-label="Terminal example">
-              <header>
-                <span />
-                <span />
-                <span />
-                <p>zsh - 80x24</p>
-              </header>
-              <pre>
-                <code>
-{`user@dev:~/cronye$ cd ui && npm run build
-user@dev:~/cronye$ cd ../daemon && go run ./cmd/daemon
-Initializing Cronye daemon...
-✓ Loaded 4 jobs from SQLite
-✓ API listening on http://127.0.0.1:9480
-✓ Scheduler active (startup catch-up: enabled)`}
-                </code>
-              </pre>
-            </article>
+          <div className="docs-steps">
+            {gettingStartedSteps.map((item, idx) => (
+              <FadeIn key={item.title} delay={0.05 + idx * 0.03}>
+                <article className="docs-step-card">
+                  <span className="step-index">{idx + 1}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </article>
+              </FadeIn>
+            ))}
+          </div>
+
+          <FadeIn delay={0.24}>
+            <div className="docs-links">
+              <a className="btn btn-primary" href="/checkout">
+                Open Checkout
+              </a>
+              <a className="btn btn-subtle" href="/recover">
+                Recover License
+              </a>
+            </div>
           </FadeIn>
         </div>
       </section>

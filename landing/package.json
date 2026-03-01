@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true})\"",
     "dev": "next dev -H 127.0.0.1 -p 3000",
-    "dev:clean": "npm run clean && npm run dev",
+    "dev:clean": "npm run clean && next dev -H 127.0.0.1 -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
