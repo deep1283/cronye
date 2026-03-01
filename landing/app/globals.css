@@ -976,6 +976,32 @@ p {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
 }
 
+.back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  text-decoration: none;
+  color: #cbd5e1;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.62rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.back-home:hover {
+  color: #f8fafc;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.back-home svg {
+  width: 14px;
+  height: 14px;
+}
+
 .lead {
   margin-top: 0.7rem;
   color: var(--muted);

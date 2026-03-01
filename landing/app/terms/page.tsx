@@ -2,6 +2,12 @@ export default function TermsPage() {
   return (
     <main className="checkout-shell">
       <section className="checkout-card policy-card">
+        <a className="back-home" href="/" aria-label="Back to home page">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 5L8 12L15 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>Home</span>
+        </a>
         <p className="eyebrow">Terms of Service</p>
         <h1>Simple terms for a local-first product</h1>
         <p className="lead">

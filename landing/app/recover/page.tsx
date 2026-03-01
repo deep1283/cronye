@@ -117,6 +117,12 @@ export default function RecoverLicensePage() {
       )}
 
       <section className="checkout-card">
+        <a className="back-home" href="/" aria-label="Back to home page">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 5L8 12L15 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>Home</span>
+        </a>
         <p className="eyebrow">Recover license</p>
         <h1>Get your key again</h1>
         <p className="lead">
