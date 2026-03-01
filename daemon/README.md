@@ -31,7 +31,7 @@ cd ui && npm run build
 
 # then run daemon
 cd daemon
-go run ./cmd/daemon
+make run
 ```
 
 Then open:
@@ -48,6 +48,14 @@ Optional environment variables:
 - `CRONYE_LICENSE_PUBLIC_KEY` (base64 encoded ed25519 public key for license verification)
 - `CRONYE_SERVICE_NAME` (default `cronye-daemon`)
 - `CRONYE_SERVICE_LABEL` (default `com.cronye.daemon`)
+
+For local development, create `daemon/.env.local` with:
+
+```bash
+CRONYE_LICENSE_PUBLIC_KEY=<base64-ed25519-public-key>
+```
+
+`make run` automatically loads `daemon/.env.local` if present.
 
 ## Release Bundle Runtime
 

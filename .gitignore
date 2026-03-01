@@ -4,6 +4,7 @@
 daemon/bin/
 daemon/var/
 daemon/.cache/
+daemon/.env.local
 
 ui/dist/
 ui/node_modules/

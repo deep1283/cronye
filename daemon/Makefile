@@ -1,7 +1,7 @@
 .PHONY: run build test fmt
 
 run:
-	go run ./cmd/daemon
+	@set -a; [ -f .env.local ] && . ./.env.local; set +a; go run ./cmd/daemon
 
 build:
 	go build ./...
