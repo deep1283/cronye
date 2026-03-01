@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/cronye/daemon/internal/jobs"
@@ -27,9 +28,30 @@ func (a *App) runStartupCatchup(ctx context.Context, now time.Time) error {
 		return err
 	}
 	if !ok {
+		if err := a.persistCatchupStats(ctx, startupCatchupStats{
+			LastRunAt:       now,
+			WindowEndAt:     now,
+			JobsScanned:     0,
+			RunsEnqueued:    0,
+			SkippedExisting: 0,
+			TruncatedJobs:   0,
+		}); err != nil {
+			return err
+		}
 		return a.persistSchedulerHeartbeat(ctx, now)
 	}
 	if !lastHeartbeat.Before(now) {
+		if err := a.persistCatchupStats(ctx, startupCatchupStats{
+			LastRunAt:       now,
+			WindowStartAt:   &lastHeartbeat,
+			WindowEndAt:     now,
+			JobsScanned:     0,
+			RunsEnqueued:    0,
+			SkippedExisting: 0,
+			TruncatedJobs:   0,
+		}); err != nil {
+			return err
+		}
 		return a.persistSchedulerHeartbeat(ctx, now)
 	}
 
@@ -97,6 +119,18 @@ func (a *App) runStartupCatchup(ctx context.Context, now time.Time) error {
 		"max_runs_per_job": startupCatchupMaxRunsPerJob,
 	})
 
+	if err := a.persistCatchupStats(ctx, startupCatchupStats{
+		LastRunAt:       now,
+		WindowStartAt:   &lastHeartbeat,
+		WindowEndAt:     now,
+		JobsScanned:     len(enabledJobs),
+		RunsEnqueued:    enqueuedTotal,
+		SkippedExisting: skippedExistingTotal,
+		TruncatedJobs:   truncatedJobs,
+	}); err != nil {
+		return err
+	}
+
 	return a.persistSchedulerHeartbeat(ctx, now)
 }
 
@@ -119,6 +153,40 @@ func (a *App) loadSchedulerHeartbeat(ctx context.Context) (time.Time, bool, erro
 
 func (a *App) persistSchedulerHeartbeat(ctx context.Context, now time.Time) error {
 	return a.settingsRepo.Upsert(ctx, settings.KeySchedulerHeartbeatAt, now.UTC().Format(time.RFC3339Nano))
+}
+
+type startupCatchupStats struct {
+	LastRunAt       time.Time
+	WindowStartAt   *time.Time
+	WindowEndAt     time.Time
+	JobsScanned     int
+	RunsEnqueued    int
+	SkippedExisting int
+	TruncatedJobs   int
+}
+
+func (a *App) persistCatchupStats(ctx context.Context, stats startupCatchupStats) error {
+	windowStart := ""
+	if stats.WindowStartAt != nil && !stats.WindowStartAt.IsZero() {
+		windowStart = stats.WindowStartAt.UTC().Format(time.RFC3339Nano)
+	}
+
+	updates := map[string]string{
+		settings.KeyCatchupLastRunAt:       stats.LastRunAt.UTC().Format(time.RFC3339Nano),
+		settings.KeyCatchupWindowStartAt:   windowStart,
+		settings.KeyCatchupWindowEndAt:     stats.WindowEndAt.UTC().Format(time.RFC3339Nano),
+		settings.KeyCatchupJobsScanned:     strconv.Itoa(stats.JobsScanned),
+		settings.KeyCatchupRunsEnqueued:    strconv.Itoa(stats.RunsEnqueued),
+		settings.KeyCatchupSkippedExisting: strconv.Itoa(stats.SkippedExisting),
+		settings.KeyCatchupTruncatedJobs:   strconv.Itoa(stats.TruncatedJobs),
+	}
+
+	for key, value := range updates {
+		if err := a.settingsRepo.Upsert(ctx, key, value); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (a *App) startSchedulerHeartbeatLoop() {

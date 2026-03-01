@@ -57,6 +57,15 @@ export interface Settings {
   max_log_bytes: number;
   global_concurrency: 1 | 2;
   alert_webhook_url: string;
+  startup_catchup?: {
+    last_run_at?: string;
+    window_start_at?: string;
+    window_end_at?: string;
+    jobs_scanned: number;
+    runs_enqueued: number;
+    skipped_existing: number;
+    truncated_jobs: number;
+  };
 }
 
 export interface RetentionPayload {
