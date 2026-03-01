@@ -1,4 +1,4 @@
-.PHONY: ui-build daemon-test daemon-build licensegen-build release release-host release-signed release-all release-matrix sign-artifacts
+.PHONY: ui-build daemon-test daemon-build licensegen-build release release-host release-signed release-all release-matrix sign-artifacts package-macos-dmg
 
 VERSION ?= dev
 GOOS ?= $(shell cd daemon && go env GOOS)
@@ -71,3 +71,6 @@ release-matrix:
 	$(MAKE) release-all VERSION=$(VERSION) RELEASE_TARGETS="$(RELEASE_MATRIX_TARGETS)" SIGNING_REQUIRED=$(SIGNING_REQUIRED) SIGNING_KEY_PATH=$(SIGNING_KEY_PATH)
 
 release: release-host
+
+package-macos-dmg:
+	VERSION=$(VERSION) GOARCH=arm64 OUTPUT_DMG=dist/release/$(VERSION)-darwin-arm64/cronye-macos.dmg ./scripts/package-macos-dmg.sh

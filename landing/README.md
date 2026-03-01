@@ -58,13 +58,11 @@ Google recovery flow:
 - `/recover` lets users sign in again and fetch paid license keys
 - for legacy purchases, first recovery can backfill Google ownership by matching paid email
 
-Optional OS-specific download links shown on landing:
+Optional download link shown on landing (macOS Apple Silicon MVP):
 
 ```bash
 NEXT_PUBLIC_RELEASES_URL=https://github.com/deep1283/cronye/releases/tag/v0.1.5
 NEXT_PUBLIC_DOWNLOAD_URL_MAC=/api/download/macos
-NEXT_PUBLIC_DOWNLOAD_URL_WINDOWS=/api/download/windows
-NEXT_PUBLIC_DOWNLOAD_URL_LINUX=/api/download/linux
 ```
 
 For private GitHub repos, the landing app can proxy release assets:
@@ -75,9 +73,19 @@ GITHUB_RELEASE_OWNER=deep1283
 GITHUB_RELEASE_REPO=cronye
 GITHUB_RELEASE_TAG=v0.1.5
 GITHUB_RELEASE_ASSET_MACOS=cronye-macos.dmg
-GITHUB_RELEASE_ASSET_WINDOWS=cronye-windows-x64.exe
-GITHUB_RELEASE_ASSET_LINUX=cronye-linux-x64.tar.gz
 ```
+
+Build the macOS asset expected by `GITHUB_RELEASE_ASSET_MACOS` from repo root:
+
+```bash
+CRONYE_LICENSE_PUBLIC_KEY=<base64-ed25519-public-key> make package-macos-dmg VERSION=0.1.5
+```
+
+Then upload:
+
+- `dist/release/0.1.5-darwin-arm64/cronye-macos.dmg`
+
+to the GitHub release tag configured in `GITHUB_RELEASE_TAG`.
 
 Webhook endpoint for Dodo:
 

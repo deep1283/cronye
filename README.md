@@ -99,6 +99,25 @@ Cross-OS matrix helper (typically for CI with native runners):
 make release-matrix VERSION=0.1.0
 ```
 
+## Build macOS Installer DMG (Apple Silicon)
+
+Create a user-facing installer (`Cronye.app` + drag-to-Applications DMG):
+
+```bash
+CRONYE_LICENSE_PUBLIC_KEY=<base64-ed25519-public-key> make package-macos-dmg VERSION=0.1.0
+```
+
+Output:
+
+- `dist/release/0.1.0-darwin-arm64/cronye-macos.dmg`
+- `dist/release/0.1.0-darwin-arm64/cronye-macos.dmg.sha256`
+
+Notes:
+
+- run this target on macOS
+- this installer target currently supports Apple Silicon (`arm64`) only
+- if `CRONYE_LICENSE_PUBLIC_KEY` is set, it is bundled into the app so paid license activation works out of the box
+
 ## Service Commands
 
 From a built daemon binary:

@@ -21,7 +21,7 @@ type FounderBenefit = {
 };
 
 type DownloadOption = {
-  os: "macOS" | "Windows" | "Linux";
+  os: "macOS";
   note: string;
   href: string;
 };
@@ -89,7 +89,7 @@ const founderBenefits: FounderBenefit[] = [
 const gettingStartedSteps: GettingStartedStep[] = [
   {
     title: "Download and install",
-    body: "Pick your operating system above, download Cronye, and install it like a normal desktop app."
+    body: "Download Cronye for macOS (Apple Silicon) and install it like a normal desktop app."
   },
   {
     title: "Get your license key",
@@ -114,16 +114,6 @@ const downloadOptions: DownloadOption[] = [
     os: "macOS",
     note: "Works on Apple Silicon Macs",
     href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_MAC?.trim() || "/api/download/macos"
-  },
-  {
-    os: "Windows",
-    note: "Works on Windows 10 and newer",
-    href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_WINDOWS?.trim() || "/api/download/windows"
-  },
-  {
-    os: "Linux",
-    note: "Works on major Linux versions",
-    href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_LINUX?.trim() || "/api/download/linux"
   }
 ];
 
@@ -207,13 +197,15 @@ function FounderIcon({ icon, className }: Readonly<{ icon: FounderBenefit["icon"
 }
 
 function OSIcon({ os, className }: Readonly<{ os: DownloadOption["os"]; className?: string }>) {
-  const iconSrc: Record<DownloadOption["os"], string> = {
-    macOS: "/branding/apple-brand.svg",
-    Windows: "/branding/windows-brand.svg",
-    Linux: "/branding/linux-brand.svg"
-  };
-
-  return <Image src={iconSrc[os]} alt={`${os} icon`} width={20} height={20} className={className} />;
+  return (
+    <Image
+      src="/branding/apple-brand.svg"
+      alt={`${os} icon`}
+      width={20}
+      height={20}
+      className={className}
+    />
+  );
 }
 
 export default function HomePage() {
@@ -323,7 +315,7 @@ export default function HomePage() {
               <p className="eyebrow">Step 1: Download</p>
               <h2>Download Cronye for your OS</h2>
               <p className="section-lead">
-                Install the local runtime first, then purchase a license key to activate access in the app.
+                Install Cronye on your Apple Silicon Mac, then purchase a license key to activate access in the app.
               </p>
             </div>
           </FadeIn>
@@ -459,7 +451,7 @@ export default function HomePage() {
                 <li>Retries with backoff and jitter</li>
                 <li>Run history and output logs</li>
                 <li>Retention and purge controls</li>
-                <li>macOS, Linux, Windows support</li>
+                <li>Apple Silicon Mac support</li>
               </ul>
               <a className="btn btn-primary" href="/checkout">
                 Start Checkout

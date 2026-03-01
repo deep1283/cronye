@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-type DownloadOS = "macos" | "windows" | "linux";
+type SupportedDownloadOS = "macos";
 
 type ReleaseAsset = {
   id: number;
@@ -14,19 +14,15 @@ type ReleaseResponse = {
   assets?: ReleaseAsset[];
 };
 
-const osAssetEnvKeys: Record<DownloadOS, string> = {
-  macos: "GITHUB_RELEASE_ASSET_MACOS",
-  windows: "GITHUB_RELEASE_ASSET_WINDOWS",
-  linux: "GITHUB_RELEASE_ASSET_LINUX"
+const osAssetEnvKeys: Record<SupportedDownloadOS, string> = {
+  macos: "GITHUB_RELEASE_ASSET_MACOS"
 };
 
-const defaultAssets: Record<DownloadOS, string> = {
-  macos: "cronye-macos.dmg",
-  windows: "cronye-windows-x64.exe",
-  linux: "cronye-linux-x64.tar.gz"
+const defaultAssets: Record<SupportedDownloadOS, string> = {
+  macos: "cronye-macos.dmg"
 };
 
-function resolveAssetName(os: DownloadOS): string {
+function resolveAssetName(os: SupportedDownloadOS): string {
   return process.env[osAssetEnvKeys[os]]?.trim() || defaultAssets[os];
 }
 
@@ -44,7 +40,7 @@ export async function GET(
   context: { params: Promise<{ os: string }> }
 ) {
   const { os } = await context.params;
-  if (os !== "macos" && os !== "windows" && os !== "linux") {
+  if (os !== "macos") {
     return NextResponse.json({ error: "unsupported_os" }, { status: 404 });
   }
 
@@ -56,7 +52,7 @@ export async function GET(
   const owner = process.env.GITHUB_RELEASE_OWNER?.trim() || "deep1283";
   const repo = process.env.GITHUB_RELEASE_REPO?.trim() || "cronye";
   const tag = process.env.GITHUB_RELEASE_TAG?.trim() || "v0.1.5";
-  const assetName = resolveAssetName(os as DownloadOS);
+  const assetName = resolveAssetName(os as SupportedDownloadOS);
 
   const releaseURL = `https://api.github.com/repos/${owner}/${repo}/releases/tags/${encodeURIComponent(tag)}`;
   const releaseResp = await fetch(releaseURL, {
