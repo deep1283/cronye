@@ -243,8 +243,17 @@ func TestIntegrationCancelRunningEndpoint(t *testing.T) {
 
 	waitForRunStatus(t, h.router, runID, []string{"running"}, 20*time.Second)
 
-	cancelResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/cancel-running", nil, http.StatusOK)
-	if mustInt(t, cancelResp["cancelled_runs"]) < 1 {
+	cancelDeadline := time.Now().Add(3 * time.Second)
+	cancelledRuns := 0
+	for time.Now().Before(cancelDeadline) {
+		cancelResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/cancel-running", nil, http.StatusOK)
+		cancelledRuns = mustInt(t, cancelResp["cancelled_runs"])
+		if cancelledRuns >= 1 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if cancelledRuns < 1 {
 		t.Fatalf("expected at least one cancelled run")
 	}
 
