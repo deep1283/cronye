@@ -171,6 +171,7 @@ function OSIcon({ os, className }: Readonly<{ os: DownloadOption["os"]; classNam
 }
 
 export default function HomePage() {
+  const currentYear = new Date().getFullYear();
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -510,35 +511,64 @@ Initializing Cronye daemon...
       </section>
 
       <footer className="site-footer">
-        <div className="container footer-inner">
-          <a className="brand" href="#top">
-            <span className="brand-icon-wrap">
-              <Image
-                src="/branding/mascot.png"
-                alt="Cronye mascot logo"
-                width={24}
-                height={24}
-                className="brand-icon-image"
-              />
-            </span>
-            <span>Cronye</span>
-          </a>
+        <div className="container footer-shell">
+          <div className="footer-top">
+            <div className="footer-brand-block">
+              <a className="brand" href="#top">
+                <span className="brand-icon-wrap">
+                  <Image
+                    src="/branding/mascot.png"
+                    alt="Cronye mascot logo"
+                    width={24}
+                    height={24}
+                    className="brand-icon-image"
+                  />
+                </span>
+                <span>Cronye</span>
+              </a>
+              <p className="footer-tagline">
+                Local-first automation for operators who value reliability and privacy.
+              </p>
+              <div className="footer-social">
+                <a
+                  className="footer-pill"
+                  href="https://x.com/deepmishra1283"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Follow on X
+                </a>
+                <a className="footer-pill" href="mailto:deepmishra1283@gmail.com">
+                  Email Support
+                </a>
+              </div>
+            </div>
 
-          <nav className="footer-links" aria-label="Footer">
-            <a href="#features">Features</a>
-            <a href="#docs">Docs</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#faq">FAQ</a>
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
-          </nav>
+            <div className="footer-nav-group">
+              <p className="footer-label">Product</p>
+              <nav className="footer-links" aria-label="Footer product links">
+                <a href="#features">Features</a>
+                <a href="#docs">Docs</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <a href="/checkout">Checkout</a>
+              </nav>
+            </div>
 
-          <p>
-            Local-first automation for operators who value reliability and privacy.{" "}
-            <a href="https://x.com/deepmishra1283" target="_blank" rel="noreferrer">
-              Follow on X for more updates.
-            </a>
-          </p>
+            <div className="footer-nav-group">
+              <p className="footer-label">Company</p>
+              <nav className="footer-links" aria-label="Footer company links">
+                <a href="/recover">Recover License</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+              </nav>
+            </div>
+          </div>
+
+          <div className="footer-bottom">
+            <p>© {currentYear} Cronye</p>
+            <p>Runs completely on your own system.</p>
+          </div>
         </div>
       </footer>
     </main>

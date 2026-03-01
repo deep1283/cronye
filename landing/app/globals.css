@@ -910,25 +910,85 @@ p {
 
 .site-footer {
   border-top: 1px solid var(--line);
-  padding: 1rem 0 2rem;
+  padding: 1.4rem 0 2rem;
+  background:
+    linear-gradient(180deg, rgba(6, 10, 18, 0.78) 0%, rgba(4, 6, 12, 0.9) 100%);
 }
 
-.footer-inner {
+.footer-shell {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.7fr) minmax(140px, 1fr) minmax(140px, 1fr);
+  gap: 1.2rem;
+}
+
+.footer-brand-block {
+  display: grid;
+  gap: 0.68rem;
+}
+
+.footer-tagline {
+  color: #b6c3d8;
+  font-size: 0.9rem;
+  max-width: 54ch;
+  line-height: 1.6;
+}
+
+.footer-social {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
   flex-wrap: wrap;
+  gap: 0.56rem;
+}
+
+.footer-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.02);
+  color: #dce7f9;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  padding: 0.52rem 0.82rem;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.footer-pill:hover {
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(56, 189, 248, 0.1);
+  color: #fff;
+}
+
+.footer-nav-group {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+}
+
+.footer-label {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 0.77rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
 .footer-links {
-  display: inline-flex;
-  gap: 1rem;
+  display: grid;
+  gap: 0.48rem;
 }
 
 .footer-links a {
-  font-size: 0.84rem;
-  color: var(--muted);
+  font-size: 0.87rem;
+  color: #a8b7cd;
   text-decoration: none;
 }
 
@@ -936,18 +996,20 @@ p {
   color: #fff;
 }
 
-.footer-inner p {
-  color: var(--muted);
-  font-size: 0.85rem;
+.footer-bottom {
+  border-top: 1px solid var(--line);
+  padding-top: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
 }
 
-.footer-inner p a {
-  color: #e2e8f0;
-  text-decoration: none;
-}
-
-.footer-inner p a:hover {
-  color: #fff;
+.footer-bottom p {
+  margin: 0;
+  color: #8fa2bf;
+  font-size: 0.8rem;
 }
 
 /* Checkout */
@@ -1178,7 +1240,12 @@ p {
     grid-template-columns: 1fr;
   }
 
-  .footer-inner {
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .footer-bottom {
     flex-direction: column;
     align-items: flex-start;
   }
