@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +32,24 @@ type integrationHarness struct {
 	store  *db.Store
 	events *events.Repository
 	ctx    context.Context
+}
+
+func shellSuccessCommand() string {
+	return "echo integration-success"
+}
+
+func shellFailureCommand() string {
+	if runtime.GOOS == "windows" {
+		return "echo retry-fail 1>&2 && exit /b 2"
+	}
+	return "echo retry-fail >&2; exit 2"
+}
+
+func shellLongRunningCommand(seconds int) string {
+	if runtime.GOOS == "windows" {
+		return fmt.Sprintf(`powershell -NoProfile -Command "Start-Sleep -Seconds %d"`, seconds)
+	}
+	return fmt.Sprintf("sleep %d", seconds)
 }
 
 func setupIntegrationHarness(t *testing.T) *integrationHarness {
@@ -116,7 +136,7 @@ func TestIntegrationRunExecutionEndpoint(t *testing.T) {
 		"schedule":          "*/20 * * * *",
 		"timezone":          "UTC",
 		"enabled":           true,
-		"payload":           map[string]any{"command": "echo integration-success"},
+		"payload":           map[string]any{"command": shellSuccessCommand()},
 		"timeout_sec":       10,
 		"retry_max":         0,
 		"retry_backoff_sec": 1,
@@ -127,7 +147,7 @@ func TestIntegrationRunExecutionEndpoint(t *testing.T) {
 	runResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/run", nil, http.StatusAccepted)
 	runID := mustString(t, runResp["run_id"])
 
-	run := waitForRunStatus(t, h.router, runID, []string{"success"}, 10*time.Second)
+	run := waitForRunStatus(t, h.router, runID, []string{"success"}, 20*time.Second)
 	if run["output_tail"] == nil || !strings.Contains(mustString(t, run["output_tail"]), "integration-success") {
 		t.Fatalf("expected output_tail to contain integration-success, got %#v", run["output_tail"])
 	}
@@ -156,7 +176,7 @@ func TestIntegrationRetryEndpoint(t *testing.T) {
 		"schedule":          "*/20 * * * *",
 		"timezone":          "UTC",
 		"enabled":           true,
-		"payload":           map[string]any{"command": "echo retry-fail >&2; exit 2"},
+		"payload":           map[string]any{"command": shellFailureCommand()},
 		"timeout_sec":       10,
 		"retry_max":         1,
 		"retry_backoff_sec": 1,
@@ -167,7 +187,7 @@ func TestIntegrationRetryEndpoint(t *testing.T) {
 	runResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/run", nil, http.StatusAccepted)
 	runID := mustString(t, runResp["run_id"])
 
-	deadline := time.Now().Add(15 * time.Second)
+	deadline := time.Now().Add(30 * time.Second)
 	var lastStatuses []string
 	for time.Now().Before(deadline) {
 		runsResp := requestJSON(t, h.router, http.MethodGet, "/jobs/"+jobID+"/runs", nil, http.StatusOK)
@@ -210,7 +230,7 @@ func TestIntegrationCancelRunningEndpoint(t *testing.T) {
 		"schedule":          "*/20 * * * *",
 		"timezone":          "UTC",
 		"enabled":           true,
-		"payload":           map[string]any{"command": "sleep 20"},
+		"payload":           map[string]any{"command": shellLongRunningCommand(20)},
 		"timeout_sec":       30,
 		"retry_max":         0,
 		"retry_backoff_sec": 1,
@@ -221,14 +241,14 @@ func TestIntegrationCancelRunningEndpoint(t *testing.T) {
 	runResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/run", nil, http.StatusAccepted)
 	runID := mustString(t, runResp["run_id"])
 
-	waitForRunStatus(t, h.router, runID, []string{"running"}, 10*time.Second)
+	waitForRunStatus(t, h.router, runID, []string{"running"}, 20*time.Second)
 
 	cancelResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/cancel-running", nil, http.StatusOK)
 	if mustInt(t, cancelResp["cancelled_runs"]) < 1 {
 		t.Fatalf("expected at least one cancelled run")
 	}
 
-	waitForRunStatus(t, h.router, runID, []string{"cancelled"}, 15*time.Second)
+	waitForRunStatus(t, h.router, runID, []string{"cancelled"}, 30*time.Second)
 	waitForEvent(t, h, 5*time.Second, func(record events.Record, meta map[string]any) bool {
 		return record.Category == "job_run" &&
 			record.Message == "cancel_running_requested" &&

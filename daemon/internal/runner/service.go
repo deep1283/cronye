@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -384,7 +385,7 @@ func (s *Service) executeShell(ctx context.Context, runID string, job jobs.Recor
 	runCtx, cancel := context.WithTimeout(ctx, time.Duration(job.TimeoutSec)*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(runCtx, "/bin/sh", "-c", command)
+	cmd := shellCommand(runCtx, command)
 	cmd.Stdout = capture
 	cmd.Stderr = capture
 
@@ -434,6 +435,13 @@ func (s *Service) executeShell(ctx context.Context, runID string, job jobs.Recor
 		outputPath: "",
 		outputTail: outputTail,
 	}
+}
+
+func shellCommand(ctx context.Context, command string) *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.CommandContext(ctx, "cmd.exe", "/C", command)
+	}
+	return exec.CommandContext(ctx, "/bin/sh", "-c", command)
 }
 
 type httpPayload struct {
