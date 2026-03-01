@@ -13,6 +13,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: "https://cronye.app/recover",
       lastModified: new Date()
+    },
+    {
+      url: "https://cronye.app/privacy",
+      lastModified: new Date()
+    },
+    {
+      url: "https://cronye.app/terms",
+      lastModified: new Date()
     }
   ];
 }

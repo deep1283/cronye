@@ -532,6 +532,8 @@ Initializing Cronye daemon...
             <a href="#docs">Docs</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
           </nav>
 
           <p>Local-first automation for operators who value reliability and privacy.</p>
