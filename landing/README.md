@@ -41,6 +41,8 @@ DODO_PAYMENTS_API_KEY=dp_test_xxx
 DODO_PRODUCT_ID=pdt_xxx
 DODO_RETURN_URL_BASE=http://localhost:3000
 DODO_WEBHOOK_SECRET=whsec_xxx
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
 ```
 
 Required signed license generation for checkout success handoff:
@@ -50,6 +52,11 @@ CRONYE_LICENSE_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVA
 ```
 
 `CRONYE_LICENSE_PRIVATE_KEY_PEM` is required. If missing, payment may succeed but no license key will be issued.
+
+Google recovery flow:
+- checkout can attach purchase intent to Google identity (`google_sub`)
+- `/recover` lets users sign in again and fetch paid license keys
+- for legacy purchases, first recovery can backfill Google ownership by matching paid email
 
 Optional OS-specific download links shown on landing:
 

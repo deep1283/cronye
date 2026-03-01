@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { saveIntent } from "@/lib/checkout-intents";
 import { createCheckoutSession } from "@/lib/dodo-api";
+import { verifyGoogleIDToken } from "@/lib/google-auth";
 import { isValidEmail } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 type CheckoutRequest = {
   email?: string;
   name?: string;
+  google_id_token?: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -19,11 +21,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_json_body" }, { status: 400 });
   }
 
-  const email = (body.email ?? "").trim().toLowerCase();
+  const requestedEmail = (body.email ?? "").trim().toLowerCase();
   const name = (body.name ?? "").trim();
+  const googleIDToken = (body.google_id_token ?? "").trim();
+
+  let googleIdentity: Awaited<ReturnType<typeof verifyGoogleIDToken>> | null = null;
+  if (googleIDToken) {
+    try {
+      googleIdentity = await verifyGoogleIDToken(googleIDToken);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "google_identity_verification_failed" },
+        { status: 400 }
+      );
+    }
+  }
+
+  const email = googleIdentity?.email || requestedEmail;
 
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "valid_email_required" }, { status: 400 });
+  }
+  if (googleIdentity && requestedEmail && requestedEmail !== googleIdentity.email) {
+    return NextResponse.json({ error: "google_email_mismatch" }, { status: 400 });
   }
 
   const productID = process.env.DODO_PRODUCT_ID;
@@ -43,7 +63,8 @@ export async function POST(req: NextRequest) {
       return_url: returnURL,
       metadata: {
         intent_id: intentId,
-        source: "cronye_landing"
+        source: "cronye_landing",
+        ...(googleIdentity ? { google_sub: googleIdentity.sub } : {})
       }
     });
 
@@ -51,6 +72,8 @@ export async function POST(req: NextRequest) {
     await saveIntent({
       id: intentId,
       email,
+      googleEmail: googleIdentity?.email,
+      googleSubject: googleIdentity?.sub,
       customerName: name || undefined,
       createdAt,
       updatedAt: createdAt,

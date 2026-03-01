@@ -1001,6 +1001,16 @@ p {
   gap: 0.72rem;
 }
 
+.checkout-identity {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.8rem;
+}
+
 .checkout-form label {
   display: grid;
   gap: 0.36rem;

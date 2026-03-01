@@ -6,6 +6,8 @@ export type IntentStatus = "created" | "pending" | "succeeded" | "failed" | "can
 export type CheckoutIntent = {
   id: string;
   email: string;
+  googleEmail?: string;
+  googleSubject?: string;
   customerName?: string;
   createdAt: string;
   updatedAt: string;

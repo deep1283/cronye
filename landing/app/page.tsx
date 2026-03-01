@@ -252,6 +252,9 @@ export default function HomePage() {
                 <a className="btn btn-subtle" href="/checkout">
                   Buy License
                 </a>
+                <a className="btn btn-secondary" href="/recover">
+                  Recover License
+                </a>
               </div>
 
               <div className="cli-chip" aria-label="Install command">
