@@ -15,6 +15,12 @@ type Faq = {
   a: string;
 };
 
+type FounderBenefit = {
+  title: string;
+  body: string;
+  icon: "cost" | "speed" | "focus";
+};
+
 type DownloadOption = {
   os: "macOS" | "Windows" | "Linux";
   note: string;
@@ -58,20 +64,38 @@ const faqItems: Faq[] = [
   }
 ];
 
+const founderBenefits: FounderBenefit[] = [
+  {
+    title: "Save Early Cash",
+    body: "Run automations locally while validating your product before paying for managed scheduler infrastructure.",
+    icon: "cost"
+  },
+  {
+    title: "Ship Faster",
+    body: "Test new jobs and product flows instantly on your machine without waiting on cloud setup.",
+    icon: "speed"
+  },
+  {
+    title: "Stay In Control",
+    body: "Your runs and logs stay on your own system, so iteration is private and predictable.",
+    icon: "focus"
+  }
+];
+
 const downloadOptions: DownloadOption[] = [
   {
     os: "macOS",
-    note: "Apple Silicon and Intel builds",
+    note: "Works on all modern Macs",
     href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_MAC?.trim() || "/api/download/macos"
   },
   {
     os: "Windows",
-    note: "x64 executable release bundle",
+    note: "Works on Windows 10 and newer",
     href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_WINDOWS?.trim() || "/api/download/windows"
   },
   {
     os: "Linux",
-    note: "systemd-ready daemon bundle",
+    note: "Works on major Linux versions",
     href: process.env.NEXT_PUBLIC_DOWNLOAD_URL_LINUX?.trim() || "/api/download/linux"
   }
 ];
@@ -129,45 +153,41 @@ function FeatureIcon({ icon, className }: Readonly<{ icon: Feature["icon"]; clas
   return <AlertIcon className={className} />;
 }
 
-function OSIcon({ os, className }: Readonly<{ os: DownloadOption["os"]; className?: string }>) {
-  if (os === "macOS") {
+function FounderIcon({ icon, className }: Readonly<{ icon: FounderBenefit["icon"]; className?: string }>) {
+  if (icon === "cost") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-        <path
-          d="M15.7 7.3C16.7 6.1 17.1 4.9 17 3.7C15.5 3.8 14.1 4.6 13.2 5.8C12.4 6.8 11.8 8.1 11.9 9.3C13.4 9.4 14.8 8.5 15.7 7.3Z"
-          fill="currentColor"
-        />
-        <path
-          d="M20.3 16.8C19.9 17.8 19.3 18.8 18.6 19.7C17.6 21 16.5 22.3 14.9 22.3C13.6 22.3 13.2 21.5 11.7 21.5C10.2 21.5 9.7 22.3 8.4 22.3C6.8 22.3 5.8 21.1 4.8 19.8C2.6 16.9 1 12.1 3.3 8.5C4.4 6.8 6.3 5.7 8.1 5.7C9.5 5.7 10.8 6.6 11.7 6.6C12.5 6.6 14.1 5.5 15.8 5.6C16.5 5.6 18.4 5.8 19.7 7.7C19.6 7.8 17.5 9 17.6 11.6C17.6 14.7 20.2 16.6 20.3 16.8Z"
-          fill="currentColor"
-        />
+        <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M12 7.8V16.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M14.8 9.6C14.2 8.8 13.3 8.4 12 8.4C10.5 8.4 9.5 9.1 9.5 10.2C9.5 11.2 10.2 11.8 11.8 12.2L12.9 12.5C14.2 12.8 14.9 13.4 14.9 14.3C14.9 15.4 13.8 16.1 12 16.1C10.5 16.1 9.4 15.6 8.8 14.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     );
   }
 
-  if (os === "Windows") {
+  if (icon === "speed") {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-        <path d="M3 4.8L10.8 3.7V11H3V4.8Z" fill="currentColor" />
-        <path d="M12.2 3.5L21 2.3V11H12.2V3.5Z" fill="currentColor" />
-        <path d="M3 12.8H10.8V20.2L3 19.1V12.8Z" fill="currentColor" />
-        <path d="M12.2 12.8H21V21.6L12.2 20.3V12.8Z" fill="currentColor" />
+        <path d="M12 4.2L6.2 12H11L10.2 19.8L17.8 10.8H13L12 4.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
     );
   }
 
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
-      <path
-        d="M8.6 11.2C8.9 8.7 10.2 7 12 7C13.8 7 15.1 8.7 15.4 11.2C15.1 11.6 14.7 11.8 14.2 11.8H9.8C9.3 11.8 8.9 11.6 8.6 11.2Z"
-        fill="currentColor"
-      />
-      <path d="M9.5 14.3C10.1 15 11 15.4 12 15.4C13 15.4 13.9 15 14.5 14.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="9.8" cy="11.9" r="0.7" fill="currentColor" />
-      <circle cx="14.2" cy="11.9" r="0.7" fill="currentColor" />
+      <path d="M12 3.8L18.2 6.2V11.2C18.2 15.2 15.8 18.8 12 20.2C8.2 18.8 5.8 15.2 5.8 11.2V6.2L12 3.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M9.2 12L11.3 14.1L14.8 10.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+function OSIcon({ os, className }: Readonly<{ os: DownloadOption["os"]; className?: string }>) {
+  const iconSrc: Record<DownloadOption["os"], string> = {
+    macOS: "/branding/apple-brand.svg",
+    Windows: "/branding/windows-brand.svg",
+    Linux: "/branding/linux-brand.svg"
+  };
+
+  return <Image src={iconSrc[os]} alt={`${os} icon`} width={20} height={20} className={className} />;
 }
 
 export default function HomePage() {
@@ -424,6 +444,32 @@ export default function HomePage() {
                   </span>
                   <h3>{feature.title}</h3>
                   <p>{feature.body}</p>
+                </article>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section section-alt founder-section">
+        <div className="container">
+          <FadeIn>
+            <p className="eyebrow">For indie hackers and founders</p>
+            <h2>Test automation before paying for extra infrastructure</h2>
+            <p className="section-lead">
+              Validate cron-powered workflows on your own machine first, then scale up only when your product needs it.
+            </p>
+          </FadeIn>
+
+          <div className="founder-grid">
+            {founderBenefits.map((item, idx) => (
+              <FadeIn key={item.title} delay={idx * 0.05}>
+                <article className="founder-card">
+                  <span className="icon-chip">
+                    <FounderIcon icon={item.icon} className="icon" />
+                  </span>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
                 </article>
               </FadeIn>
             ))}

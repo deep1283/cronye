@@ -458,9 +458,10 @@ p {
 }
 
 .download-icon {
-  width: 19px;
-  height: 19px;
-  color: #7dd3fc;
+  width: 20px;
+  height: 20px;
+  display: block;
+  object-fit: contain;
 }
 
 .download-os {
@@ -792,6 +793,38 @@ p {
 }
 
 .feature-card p {
+  margin-top: 0.48rem;
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.68;
+}
+
+.founder-section {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(7, 12, 20, 0.72) 0%, rgba(9, 14, 24, 0.3) 100%);
+}
+
+.founder-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.86rem;
+}
+
+.founder-card {
+  border: 1px solid rgba(56, 189, 248, 0.26);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(168deg, rgba(9, 14, 24, 0.94) 0%, rgba(11, 18, 31, 0.94) 100%);
+  padding: 1rem;
+}
+
+.founder-card h3 {
+  margin-top: 0.72rem;
+  font-size: 1.1rem;
+}
+
+.founder-card p {
   margin-top: 0.48rem;
   color: var(--muted);
   font-size: 0.93rem;
@@ -1202,6 +1235,10 @@ p {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .founder-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .download-grid {
     grid-template-columns: 1fr;
   }
@@ -1237,6 +1274,10 @@ p {
   }
 
   .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .founder-grid {
     grid-template-columns: 1fr;
   }
 
