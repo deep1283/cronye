@@ -9,11 +9,10 @@ npm run dev
 
 Default URL: `http://localhost:3000`
 
-If you ever hit a Next.js missing-chunk runtime error (for example `Cannot find module './638.js'`), run:
+If you ever hit a Next.js missing-chunk runtime error (for example `Cannot find module './638.js'`), stop any running dev server and run:
 
 ```bash
-npm run clean
-npm run dev
+npm run dev:clean
 ```
 
 Included sections:
@@ -51,6 +50,27 @@ CRONYE_LICENSE_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVA
 ```
 
 If `CRONYE_LICENSE_PRIVATE_KEY_PEM` is missing, success flow generates a `plain:` dev token.
+
+Optional OS-specific download links shown on landing:
+
+```bash
+NEXT_PUBLIC_RELEASES_URL=https://github.com/deep1283/cronye/releases/tag/v0.1.5
+NEXT_PUBLIC_DOWNLOAD_URL_MAC=/api/download/macos
+NEXT_PUBLIC_DOWNLOAD_URL_WINDOWS=/api/download/windows
+NEXT_PUBLIC_DOWNLOAD_URL_LINUX=/api/download/linux
+```
+
+For private GitHub repos, the landing app can proxy release assets:
+
+```bash
+GITHUB_RELEASE_TOKEN=github_pat_xxx
+GITHUB_RELEASE_OWNER=deep1283
+GITHUB_RELEASE_REPO=cronye
+GITHUB_RELEASE_TAG=v0.1.5
+GITHUB_RELEASE_ASSET_MACOS=cronye-macos.dmg
+GITHUB_RELEASE_ASSET_WINDOWS=cronye-windows-x64.exe
+GITHUB_RELEASE_ASSET_LINUX=cronye-linux-x64.tar.gz
+```
 
 Webhook endpoint for Dodo:
 

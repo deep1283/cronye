@@ -4,13 +4,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cronye.app"),
-  title: "Cronye | Local-First Cron Automation",
+  title: "Cronye | Premium Cron Automation",
   description:
-    "Reliable automations on your own machine. Schedule shell and webhook jobs, retries, logs, and cleanup controls without cloud lock-in.",
+    "A premium, local-first automation daemon engineered in Go. Control your ecosystem with precision timing, beautiful logs, and zero latency.",
   openGraph: {
-    title: "Cronye | Local-First Cron Automation",
+    title: "Cronye | Premium Cron Automation",
     description:
-      "Reliable automations on your own machine. No cloud lock-in.",
+      "Reliable local-first automation. Control your ecosystem with precision.",
     type: "website",
     url: "https://cronye.app",
     images: [
@@ -18,15 +18,15 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Cronye local-first cron automation"
+        alt: "Cronye premium cron automation"
       }
     ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cronye | Local-First Cron Automation",
+    title: "Cronye | Premium Cron Automation",
     description:
-      "Schedule shell and webhook automations with retries, logs, and retention controls.",
+      "A premium, local-first automation daemon engineered in Go.",
     images: ["/opengraph-image"]
   }
 };
@@ -37,8 +37,10 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className="dark">
+      <body className="antialiased">
+        {children}
+      </body>
     </html>
   );
 }
