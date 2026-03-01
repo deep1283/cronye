@@ -536,7 +536,12 @@ Initializing Cronye daemon...
             <a href="/terms">Terms</a>
           </nav>
 
-          <p>Local-first automation for operators who value reliability and privacy.</p>
+          <p>
+            Local-first automation for operators who value reliability and privacy.{" "}
+            <a href="https://x.com/deepmishra1283" target="_blank" rel="noreferrer">
+              Follow on X for more updates.
+            </a>
+          </p>
         </div>
       </footer>
     </main>

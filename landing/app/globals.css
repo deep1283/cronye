@@ -963,6 +963,15 @@ p {
   font-size: 0.85rem;
 }
 
+.footer-inner p a {
+  color: #e2e8f0;
+  text-decoration: none;
+}
+
+.footer-inner p a:hover {
+  color: #fff;
+}
+
 /* Checkout */
 .checkout-shell {
   min-height: 100vh;
