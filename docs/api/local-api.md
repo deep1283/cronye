@@ -11,6 +11,10 @@ Examples:
 - `/health` and `/api/health`
 - `/jobs` and `/api/jobs`
 
+License enforcement:
+- `GET /license`, `POST /license/activate`, `POST /license/deactivate`, and `GET /health` are always available.
+- All other endpoints require an active license and return `402` with `{"error":"license_required"}` when inactive.
+
 ## Health
 
 ### `GET /health`
@@ -125,6 +129,15 @@ Response also includes cap-enforcement result:
 
 ### `GET /settings`
 Get current retention, storage, concurrency, and alerts settings.
+
+Also returns startup catch-up summary:
+- `startup_catchup.last_run_at`
+- `startup_catchup.window_start_at`
+- `startup_catchup.window_end_at`
+- `startup_catchup.jobs_scanned`
+- `startup_catchup.runs_enqueued`
+- `startup_catchup.skipped_existing`
+- `startup_catchup.truncated_jobs`
 
 ### `PUT /settings/alerts`
 Set terminal failure webhook URL.

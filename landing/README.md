@@ -43,13 +43,13 @@ DODO_RETURN_URL_BASE=http://localhost:3000
 DODO_WEBHOOK_SECRET=whsec_xxx
 ```
 
-Optional signed license generation for success handoff:
+Required signed license generation for checkout success handoff:
 
 ```bash
 CRONYE_LICENSE_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 ```
 
-If `CRONYE_LICENSE_PRIVATE_KEY_PEM` is missing, success flow generates a `plain:` dev token.
+`CRONYE_LICENSE_PRIVATE_KEY_PEM` is required. If missing, payment may succeed but no license key will be issued.
 
 Optional OS-specific download links shown on landing:
 

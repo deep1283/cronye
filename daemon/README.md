@@ -16,6 +16,7 @@ Week 1 scope currently implemented:
 - Log cap enforcement deletes oldest persisted run output files when above `max_log_bytes`
 - Maintenance APIs: `POST /maintenance/purge`, `GET /storage/usage`, `PUT /settings/retention`, `GET /settings`
 - License APIs: `GET /license`, `POST /license/activate`, `POST /license/deactivate`
+- License enforcement: all non-license API routes require an active signed license
 - Automatic maintenance worker runs every 10 minutes:
   - nightly retention purge (once per local calendar day)
   - periodic log-cap enforcement
@@ -45,7 +46,6 @@ Optional environment variables:
 - `CRONYE_DB_PATH` (default `<CRONYE_DATA_DIR>/cronye.db`)
 - `CRONYE_UI_DIST` (default `ui/dist`; daemon also tries `../ui/dist` fallback)
 - `CRONYE_LICENSE_PUBLIC_KEY` (base64 encoded ed25519 public key for license verification)
-- `CRONYE_LICENSE_ALLOW_UNSIGNED_DEV` (`true` for local dev-only unsigned tokens)
 - `CRONYE_SERVICE_NAME` (default `cronye-daemon`)
 - `CRONYE_SERVICE_LABEL` (default `com.cronye.daemon`)
 

@@ -1,8 +1,16 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/cronye/daemon/internal/license"
 )
 
 func TestValidateUpsertJobDefaults(t *testing.T) {
@@ -65,5 +73,69 @@ func TestValidateUpsertJobInvalidSchedule(t *testing.T) {
 	}
 	if err.Error() != "invalid_schedule" {
 		t.Fatalf("expected invalid_schedule error, got %s", err.Error())
+	}
+}
+
+type fakeLicenseControl struct {
+	status license.Status
+	err    error
+}
+
+func (f fakeLicenseControl) Status(_ context.Context) (license.Status, error) {
+	return f.status, f.err
+}
+
+func (f fakeLicenseControl) Activate(_ context.Context, _ string) (license.Status, error) {
+	return license.Status{}, nil
+}
+
+func (f fakeLicenseControl) Deactivate(_ context.Context) error {
+	return nil
+}
+
+func TestRequireActiveLicenseMiddlewareBlocksProtectedRoutes(t *testing.T) {
+	t.Parallel()
+
+	deps := Dependencies{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		License: fakeLicenseControl{
+			status: license.Status{Active: false, Status: "missing", Message: "license_not_activated"},
+		},
+	}
+	handler := requireActiveLicenseMiddleware(deps)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/jobs", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusPaymentRequired {
+		t.Fatalf("expected status %d, got %d", http.StatusPaymentRequired, rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "license_required") {
+		t.Fatalf("expected license_required body, got %s", rr.Body.String())
+	}
+}
+
+func TestRequireActiveLicenseMiddlewareAllowsLicenseRoutes(t *testing.T) {
+	t.Parallel()
+
+	deps := Dependencies{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		License: fakeLicenseControl{
+			status: license.Status{Active: false, Status: "missing", Message: "license_not_activated"},
+		},
+	}
+	handler := requireActiveLicenseMiddleware(deps)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/license", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, rr.Code)
 	}
 }

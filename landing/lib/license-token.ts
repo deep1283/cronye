@@ -32,14 +32,9 @@ export function issueLicenseKey(email: string): {
     device_limit: 1
   };
 
-  const privateKeyPEM = process.env.CRONYE_LICENSE_PRIVATE_KEY_PEM?.replace(
-    /\\n/g,
-    "\n"
-  );
-
+  const privateKeyPEM = process.env.CRONYE_LICENSE_PRIVATE_KEY_PEM?.replace(/\\n/g, "\n");
   if (!privateKeyPEM) {
-    const payload = toBase64URL(JSON.stringify(claims));
-    return { key: `plain:${payload}`, signed: false };
+    throw new Error("license_signing_key_missing");
   }
 
   const payloadBuffer = Buffer.from(JSON.stringify(claims));

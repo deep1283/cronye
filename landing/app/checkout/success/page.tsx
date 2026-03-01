@@ -92,9 +92,7 @@ function CheckoutSuccessContent() {
 
             {state.status === "succeeded" && state.license_key && (
               <div className="license-box">
-                <p>
-                  License generated ({state.license_signed ? "signed" : "dev unsigned"}).
-                </p>
+                <p>License generated (signed).</p>
                 <textarea readOnly value={state.license_key} />
                 <div className="cta-row">
                   <button className="btn btn-primary" onClick={() => void copyLicense()}>
@@ -113,6 +111,13 @@ function CheckoutSuccessContent() {
                   In Cronye local UI: Settings → License → paste and activate.
                 </p>
               </div>
+            )}
+
+            {state.status === "succeeded" && !state.license_key && (
+              <p className="error-line">
+                Payment succeeded, but license issuance is not available yet. Contact support with
+                your intent ID.
+              </p>
             )}
 
             {(state.status === "created" || state.status === "pending") && (

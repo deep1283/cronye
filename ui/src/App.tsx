@@ -84,7 +84,12 @@ function formatBytes(value?: number) {
 }
 
 function parseAPIError(error: unknown) {
-  if (error instanceof APIError) return error.message;
+  if (error instanceof APIError) {
+    if (error.status === 402 || error.message === "license_required") {
+      return "license_required_activate_to_continue";
+    }
+    return error.message;
+  }
   if (error instanceof Error) return error.message;
   return "unknown_error";
 }
@@ -159,6 +164,7 @@ function App() {
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
     [jobs, selectedJobId]
   );
+  const startupCatchup = settings?.startup_catchup;
 
   const filteredRuns = useMemo(() => {
     if (runFilter === "all") return runs;
@@ -208,15 +214,24 @@ function App() {
   const loadLicense = useCallback(async () => {
     const status = await api.getLicense();
     setLicenseStatus(status);
+    return status;
   }, []);
 
   const loadAll = useCallback(async () => {
     setBusy(true);
     setNotice(null);
     try {
-      await Promise.all([loadHealth(), loadJobs(), loadStorage(), loadSettings()]);
-      await loadLicense();
-      if (selectedJobId) {
+      const [, license] = await Promise.all([loadHealth(), loadLicense()]);
+      if (!license.active) {
+        setJobs([]);
+        setRuns([]);
+        setStorage(null);
+        setSettings(null);
+        return;
+      }
+
+      await Promise.all([loadJobs(), loadStorage(), loadSettings()]);
+      if (selectedJobId && license.active) {
         await loadRuns(selectedJobId);
       }
     } catch (error) {
@@ -233,11 +248,13 @@ function App() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       void loadHealth();
+      void loadLicense();
+      if (!licenseStatus?.active) return;
       void loadJobs();
       if (selectedJobId) void loadRuns(selectedJobId);
     }, 8000);
     return () => window.clearInterval(interval);
-  }, [loadHealth, loadJobs, loadRuns, selectedJobId]);
+  }, [licenseStatus?.active, loadHealth, loadJobs, loadLicense, loadRuns, selectedJobId]);
 
   const selectJob = useCallback(
     async (job: Job) => {
@@ -435,7 +452,8 @@ function App() {
         retention_days: saved.retention_days,
         max_log_bytes: saved.max_log_bytes,
         global_concurrency: saved.global_concurrency,
-        alert_webhook_url: previous?.alert_webhook_url ?? ""
+        alert_webhook_url: previous?.alert_webhook_url ?? "",
+        startup_catchup: previous?.startup_catchup
       }));
       await loadStorage();
       setNotice({ type: "info", text: "settings_updated" });
@@ -458,7 +476,8 @@ function App() {
               retention_days: settingsDraft.retention_days,
               max_log_bytes: settingsDraft.max_log_bytes,
               global_concurrency: settingsDraft.global_concurrency,
-              alert_webhook_url: saved.alert_webhook_url
+              alert_webhook_url: saved.alert_webhook_url,
+              startup_catchup: undefined
             }
       );
       setNotice({ type: "info", text: "alert_webhook_updated" });
@@ -998,6 +1017,41 @@ function App() {
           {panel === "settings" && (
             <section className="rounded-2xl border border-edge bg-panel p-4 shadow-card">
               <h2 className="mb-3 font-display text-xl">Settings</h2>
+
+              <div className="mb-4 rounded-xl border border-edge bg-white p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold">Startup Catch-up</p>
+                  <p className="text-xs text-slate">
+                    last replay: {formatDate(startupCatchup?.last_run_at)}
+                  </p>
+                </div>
+                <div className="grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg border border-edge p-2">
+                    <p className="text-xs text-slate">Window Start</p>
+                    <p className="font-semibold">{formatDate(startupCatchup?.window_start_at)}</p>
+                  </div>
+                  <div className="rounded-lg border border-edge p-2">
+                    <p className="text-xs text-slate">Window End</p>
+                    <p className="font-semibold">{formatDate(startupCatchup?.window_end_at)}</p>
+                  </div>
+                  <div className="rounded-lg border border-edge p-2">
+                    <p className="text-xs text-slate">Jobs Scanned</p>
+                    <p className="font-semibold">{startupCatchup?.jobs_scanned ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg border border-edge p-2">
+                    <p className="text-xs text-slate">Runs Enqueued</p>
+                    <p className="font-semibold">{startupCatchup?.runs_enqueued ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg border border-edge p-2">
+                    <p className="text-xs text-slate">Skipped Existing</p>
+                    <p className="font-semibold">{startupCatchup?.skipped_existing ?? 0}</p>
+                  </div>
+                  <div className="rounded-lg border border-edge p-2">
+                    <p className="text-xs text-slate">Truncated Jobs</p>
+                    <p className="font-semibold">{startupCatchup?.truncated_jobs ?? 0}</p>
+                  </div>
+                </div>
+              </div>
 
               <div className="grid gap-3 md:grid-cols-3">
                 <label className="block text-sm">

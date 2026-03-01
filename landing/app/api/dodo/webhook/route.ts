@@ -5,6 +5,7 @@ import {
   getIntent,
   updateIntent
 } from "@/lib/checkout-intents";
+import { retrieveCheckoutSession } from "@/lib/dodo-api";
 import { issueLicenseKey } from "@/lib/license-token";
 import {
   isReasonableTimestamp,
@@ -136,10 +137,23 @@ export async function POST(req: NextRequest) {
   };
 
   if (normalized === "succeeded" && !intent.licenseKey) {
+    const checkout = await retrieveCheckoutSession(intent.sessionId);
+    const checkoutStatus = asString(checkout.payment_status).toLowerCase();
+    if (checkoutStatus !== "succeeded") {
+      return NextResponse.json(
+        { status: "ignored", reason: "checkout_not_paid" },
+        { status: 409 }
+      );
+    }
+
     const issued = issueLicenseKey(intent.email);
     patch.licenseKey = issued.key;
     patch.licenseSigned = issued.signed;
     patch.licenseIssuedAt = new Date().toISOString();
+  } else if (normalized !== "succeeded") {
+    patch.licenseKey = undefined;
+    patch.licenseSigned = undefined;
+    patch.licenseIssuedAt = undefined;
   }
 
   intent = await updateIntent(intent.id, patch);

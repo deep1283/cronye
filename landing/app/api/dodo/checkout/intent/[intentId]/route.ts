@@ -28,7 +28,11 @@ export async function GET(
     return NextResponse.json({ error: "intent_not_found" }, { status: 404 });
   }
 
-  if (intent.licenseKey) {
+  if (
+    intent.licenseKey &&
+    intent.status === "succeeded" &&
+    intent.paymentStatus === "succeeded"
+  ) {
     return NextResponse.json({
       intent_id: intent.id,
       status: intent.status,
@@ -55,6 +59,10 @@ export async function GET(
       patch.licenseKey = license.key;
       patch.licenseSigned = license.signed;
       patch.licenseIssuedAt = new Date().toISOString();
+    } else {
+      patch.licenseKey = undefined;
+      patch.licenseSigned = undefined;
+      patch.licenseIssuedAt = undefined;
     }
 
     const updated = await updateIntent(intent.id, patch);

@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 const (
@@ -15,14 +14,13 @@ const (
 )
 
 type Config struct {
-	Addr                    string
-	DataDir                 string
-	DBPath                  string
-	UIDistDir               string
-	ServiceName             string
-	ServiceLabel            string
-	LicensePublicKey        string
-	LicenseAllowUnsignedDev bool
+	Addr             string
+	DataDir          string
+	DBPath           string
+	UIDistDir        string
+	ServiceName      string
+	ServiceLabel     string
+	LicensePublicKey string
 }
 
 func FromEnv() Config {
@@ -33,17 +31,15 @@ func FromEnv() Config {
 	serviceName := getEnv("CRONYE_SERVICE_NAME", defaultSvcName)
 	serviceLabel := getEnv("CRONYE_SERVICE_LABEL", defaultSvcLabel)
 	licensePublicKey := getEnv("CRONYE_LICENSE_PUBLIC_KEY", "")
-	allowUnsignedDev, _ := strconv.ParseBool(getEnv("CRONYE_LICENSE_ALLOW_UNSIGNED_DEV", "false"))
 
 	return Config{
-		Addr:                    addr,
-		DataDir:                 dataDir,
-		DBPath:                  dbPath,
-		UIDistDir:               uiDistDir,
-		ServiceName:             serviceName,
-		ServiceLabel:            serviceLabel,
-		LicensePublicKey:        licensePublicKey,
-		LicenseAllowUnsignedDev: allowUnsignedDev,
+		Addr:             addr,
+		DataDir:          dataDir,
+		DBPath:           dbPath,
+		UIDistDir:        uiDistDir,
+		ServiceName:      serviceName,
+		ServiceLabel:     serviceLabel,
+		LicensePublicKey: licensePublicKey,
 	}
 }
 

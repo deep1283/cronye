@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -20,11 +19,10 @@ import (
 )
 
 type Service struct {
-	logger           *slog.Logger
-	settings         *settings.Repository
-	publicKey        ed25519.PublicKey
-	allowUnsignedDev bool
-	deviceID         string
+	logger    *slog.Logger
+	settings  *settings.Repository
+	publicKey ed25519.PublicKey
+	deviceID  string
 }
 
 type Status struct {
@@ -52,11 +50,10 @@ func NewService(logger *slog.Logger, settingsRepo *settings.Repository, cfg conf
 	}
 
 	return &Service{
-		logger:           logger,
-		settings:         settingsRepo,
-		publicKey:        publicKey,
-		allowUnsignedDev: cfg.LicenseAllowUnsignedDev,
-		deviceID:         deviceID,
+		logger:    logger,
+		settings:  settingsRepo,
+		publicKey: publicKey,
+		deviceID:  deviceID,
 	}, nil
 }
 
@@ -150,26 +147,6 @@ func (s *Service) verify(token string) (Status, Claims, error) {
 	}
 
 	if len(s.publicKey) == 0 {
-		if s.allowUnsignedDev && strings.HasPrefix(token, "plain:") {
-			payload := strings.TrimPrefix(token, "plain:")
-			decoded, err := base64.RawURLEncoding.DecodeString(payload)
-			if err != nil {
-				return s.baseStatus("invalid", "invalid_dev_license"), Claims{}, errors.New("invalid_dev_license")
-			}
-			var claims Claims
-			if err := json.Unmarshal(decoded, &claims); err != nil {
-				return s.baseStatus("invalid", "invalid_dev_license"), Claims{}, errors.New("invalid_dev_license")
-			}
-			if err := s.validateTimeBounds(claims); err != nil {
-				return s.baseStatus(statusForTimeError(err), err.Error()), Claims{}, err
-			}
-			st := Status{
-				Active:   true,
-				Status:   "active",
-				DeviceID: s.deviceID,
-			}
-			return st, claims, nil
-		}
 		return s.baseStatus("unconfigured", "license_public_key_not_configured"), Claims{}, errors.New("license_public_key_not_configured")
 	}
 

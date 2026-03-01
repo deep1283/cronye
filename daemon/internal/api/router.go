@@ -106,6 +106,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RealIP)
+	r.Use(requireActiveLicenseMiddleware(deps))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
@@ -647,11 +648,63 @@ func NewRouter(deps Dependencies) http.Handler {
 			return
 		}
 
+		catchupLastRunAt, err := deps.Settings.Get(r.Context(), settings.KeyCatchupLastRunAt)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			deps.Logger.Error("load catchup_last_run_at failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		catchupWindowStartAt, err := deps.Settings.Get(r.Context(), settings.KeyCatchupWindowStartAt)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			deps.Logger.Error("load catchup_window_start_at failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		catchupWindowEndAt, err := deps.Settings.Get(r.Context(), settings.KeyCatchupWindowEndAt)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			deps.Logger.Error("load catchup_window_end_at failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		catchupJobsScanned, err := deps.Settings.GetInt(r.Context(), settings.KeyCatchupJobsScanned, 0)
+		if err != nil {
+			deps.Logger.Error("load catchup_jobs_scanned failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		catchupRunsEnqueued, err := deps.Settings.GetInt(r.Context(), settings.KeyCatchupRunsEnqueued, 0)
+		if err != nil {
+			deps.Logger.Error("load catchup_runs_enqueued failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		catchupSkippedExisting, err := deps.Settings.GetInt(r.Context(), settings.KeyCatchupSkippedExisting, 0)
+		if err != nil {
+			deps.Logger.Error("load catchup_skipped_existing failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+		catchupTruncatedJobs, err := deps.Settings.GetInt(r.Context(), settings.KeyCatchupTruncatedJobs, 0)
+		if err != nil {
+			deps.Logger.Error("load catchup_truncated_jobs failed", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+
 		writeJSON(w, http.StatusOK, map[string]any{
 			"retention_days":     retentionDays,
 			"max_log_bytes":      maxLogBytes,
 			"global_concurrency": globalConcurrency,
 			"alert_webhook_url":  alertWebhookURL,
+			"startup_catchup": map[string]any{
+				"last_run_at":      catchupLastRunAt,
+				"window_start_at":  catchupWindowStartAt,
+				"window_end_at":    catchupWindowEndAt,
+				"jobs_scanned":     catchupJobsScanned,
+				"runs_enqueued":    catchupRunsEnqueued,
+				"skipped_existing": catchupSkippedExisting,
+				"truncated_jobs":   catchupTruncatedJobs,
+			},
 		})
 	})
 
@@ -739,6 +792,40 @@ func NewRouter(deps Dependencies) http.Handler {
 	})
 
 	return r
+}
+
+func requireActiveLicenseMiddleware(deps Dependencies) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if deps.License == nil || isLicenseExemptPath(r.URL.Path) || r.Method == http.MethodOptions {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			status, err := deps.License.Status(r.Context())
+			if err != nil {
+				deps.Logger.Error("license status check failed", "path", r.URL.Path, "error", err)
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+				return
+			}
+			if status.Active {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			writeJSON(w, http.StatusPaymentRequired, map[string]any{
+				"error":  "license_required",
+				"status": status,
+			})
+		})
+	}
+}
+
+func isLicenseExemptPath(path string) bool {
+	if path == "/health" {
+		return true
+	}
+	return path == "/license" || strings.HasPrefix(path, "/license/")
 }
 
 func decodeJSON(r *http.Request, dst any) error {
