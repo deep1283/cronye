@@ -26,13 +26,21 @@ function resolveAssetName(os: SupportedDownloadOS): string {
   return process.env[osAssetEnvKeys[os]]?.trim() || defaultAssets[os];
 }
 
-function githubHeaders(token: string, accept: string): HeadersInit {
-  return {
-    Authorization: `Bearer ${token}`,
+function githubHeaders(token: string | undefined, accept: string): HeadersInit {
+  const headers: HeadersInit = {
     Accept: accept,
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "cronye-landing-download-proxy"
   };
+
+  if (token && token.trim().length > 0) {
+    return {
+      ...headers,
+      Authorization: `Bearer ${token}`
+    };
+  }
+
+  return headers;
 }
 
 export async function GET(
@@ -45,9 +53,6 @@ export async function GET(
   }
 
   const token = process.env.GITHUB_RELEASE_TOKEN?.trim();
-  if (!token) {
-    return NextResponse.json({ error: "github_release_token_missing" }, { status: 500 });
-  }
 
   const owner = process.env.GITHUB_RELEASE_OWNER?.trim() || "deep1283";
   const repo = process.env.GITHUB_RELEASE_REPO?.trim() || "cronye";
@@ -55,10 +60,17 @@ export async function GET(
   const assetName = resolveAssetName(os as SupportedDownloadOS);
 
   const releaseURL = `https://api.github.com/repos/${owner}/${repo}/releases/tags/${encodeURIComponent(tag)}`;
-  const releaseResp = await fetch(releaseURL, {
+  let releaseResp = await fetch(releaseURL, {
     headers: githubHeaders(token, "application/vnd.github+json"),
     cache: "no-store"
   });
+  // If a bad token is configured but release is public, retry anonymously.
+  if (releaseResp.status === 401 && token) {
+    releaseResp = await fetch(releaseURL, {
+      headers: githubHeaders(undefined, "application/vnd.github+json"),
+      cache: "no-store"
+    });
+  }
   if (!releaseResp.ok) {
     return NextResponse.json(
       { error: `release_lookup_failed_${releaseResp.status}` },
@@ -73,11 +85,18 @@ export async function GET(
   }
 
   const assetAPIURL = `https://api.github.com/repos/${owner}/${repo}/releases/assets/${asset.id}`;
-  const assetResp = await fetch(assetAPIURL, {
+  let assetResp = await fetch(assetAPIURL, {
     headers: githubHeaders(token, "application/octet-stream"),
     redirect: "follow",
     cache: "no-store"
   });
+  if (assetResp.status === 401 && token) {
+    assetResp = await fetch(assetAPIURL, {
+      headers: githubHeaders(undefined, "application/octet-stream"),
+      redirect: "follow",
+      cache: "no-store"
+    });
+  }
   if (!assetResp.ok || !assetResp.body) {
     return NextResponse.json(
       { error: `asset_download_failed_${assetResp.status}` },
