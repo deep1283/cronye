@@ -204,13 +204,6 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      <div className="telemetry telemetry-left" aria-hidden="true">
-        SYS.STATUS: ONLINE // LOOP: 1M // API: 127.0.0.1
-      </div>
-      <div className="telemetry telemetry-right" aria-hidden="true">
-        DAEMON: CRONYE // RAM: &lt;80MB // STARTUP: &lt;2S
-      </div>
-
       <header className="site-nav">
         <div className="container nav-inner">
           <a className="brand" href="#top">

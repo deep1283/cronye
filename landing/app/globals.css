@@ -95,29 +95,6 @@ p {
   mask-image: radial-gradient(circle at 50% 0%, black 35%, transparent 100%);
 }
 
-.telemetry {
-  position: fixed;
-  color: rgba(148, 163, 184, 0.45);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-family: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
-  pointer-events: none;
-  user-select: none;
-}
-
-.telemetry-left {
-  top: 140px;
-  left: 6px;
-  transform: rotate(-90deg);
-  transform-origin: top left;
-}
-
-.telemetry-right {
-  right: 16px;
-  bottom: 40px;
-}
-
 .site-nav {
   position: sticky;
   top: 0;
@@ -1172,10 +1149,6 @@ p {
 }
 
 @media (max-width: 840px) {
-  .telemetry {
-    display: none;
-  }
-
   .nav-links {
     display: none;
   }
