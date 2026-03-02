@@ -38,6 +38,8 @@ Landing download button (macOS Apple Silicon MVP):
 NEXT_PUBLIC_DOWNLOAD_URL_MAC=/api/download/macos
 # Optional support link override (default is one-click /api/support/checkout)
 NEXT_PUBLIC_SUPPORT_URL=/api/support/checkout
+# Optional repo URL fallback used when support checkout env is missing.
+NEXT_PUBLIC_REPO_URL=https://github.com/deep1283/cronye
 ```
 
 Optional support checkout via Dodo API (used by `/api/support/checkout`):
@@ -48,7 +50,11 @@ DODO_PAYMENTS_API_KEY=dp_test_xxx
 DODO_PRODUCT_ID=pdt_xxx
 DODO_RETURN_URL_BASE=http://localhost:3000
 SUPPORT_CHECKOUT_EMAIL_DOMAIN=cronye.app
+# Optional fallback URL if Dodo checkout cannot be created.
+SUPPORT_FALLBACK_URL=https://github.com/deep1283/cronye
 ```
+
+If Dodo env vars are not set, `/api/support/checkout` automatically redirects to the repo URL fallback instead of returning an error.
 
 For private GitHub repos, the landing app can proxy release assets:
 
@@ -56,18 +62,18 @@ For private GitHub repos, the landing app can proxy release assets:
 GITHUB_RELEASE_TOKEN=github_pat_xxx
 GITHUB_RELEASE_OWNER=deep1283
 GITHUB_RELEASE_REPO=cronye
-GITHUB_RELEASE_TAG=v0.1.6
+GITHUB_RELEASE_TAG=v0.1.10
 GITHUB_RELEASE_ASSET_MACOS=cronye-macos.dmg
 ```
 
 Build the macOS asset expected by `GITHUB_RELEASE_ASSET_MACOS` from repo root:
 
 ```bash
-make package-macos-dmg VERSION=0.1.6
+make package-macos-dmg VERSION=0.1.10
 ```
 
 Then upload:
 
-- `dist/release/0.1.6-darwin-arm64/cronye-macos.dmg`
+- `dist/release/0.1.10-darwin-arm64/cronye-macos.dmg`
 
 to the GitHub release tag configured in `GITHUB_RELEASE_TAG`.

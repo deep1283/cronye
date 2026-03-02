@@ -15,7 +15,8 @@ Week 1 scope currently implemented:
 - Terminal failure webhook alerts configurable via `PUT /settings/alerts`
 - Log cap enforcement deletes oldest persisted run output files when above `max_log_bytes`
 - Maintenance APIs: `POST /maintenance/purge`, `GET /storage/usage`, `PUT /settings/retention`, `GET /settings`
-- License compatibility APIs: `GET /license`, `POST /license/activate`, `POST /license/deactivate`
+- Open-source mode by default (no activation required)
+- Optional legacy license compatibility APIs: `GET /license`, `POST /license/activate`, `POST /license/deactivate`
 - Automatic maintenance worker runs every 10 minutes:
   - nightly retention purge (once per local calendar day)
   - periodic log-cap enforcement
@@ -47,6 +48,7 @@ Optional environment variables:
 - `CRONYE_RUNNER_CONCURRENCY` (default `4`; number of concurrent run workers)
 - `CRONYE_SERVICE_NAME` (default `cronye-daemon`)
 - `CRONYE_SERVICE_LABEL` (default `com.cronye.daemon`)
+- `CRONYE_LICENSE_PUBLIC_KEY` (optional; only needed if you want to enforce signed license activation)
 
 ## Release Bundle Runtime
 

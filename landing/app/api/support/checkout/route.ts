@@ -10,13 +10,21 @@ function supportCheckoutEmail() {
   return `supporter+${token}@${domain}`;
 }
 
+function supportFallbackURL(req: NextRequest) {
+  return (
+    process.env.SUPPORT_FALLBACK_URL?.trim() ||
+    process.env.NEXT_PUBLIC_REPO_URL?.trim() ||
+    "https://github.com/deep1283/cronye"
+  );
+}
+
 export async function GET(req: NextRequest) {
   const email = supportCheckoutEmail();
   const name = "Cronye Supporter";
 
   const productID = process.env.DODO_PRODUCT_ID?.trim();
   if (!productID) {
-    return NextResponse.json({ error: "dodo_product_id_missing" }, { status: 500 });
+    return NextResponse.redirect(supportFallbackURL(req));
   }
 
   const returnBase = process.env.DODO_RETURN_URL_BASE?.trim() || req.nextUrl.origin;
@@ -34,9 +42,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(checkout.checkout_url);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "support_checkout_create_failed" },
-      { status: 500 }
-    );
+    return NextResponse.redirect(supportFallbackURL(req));
   }
 }

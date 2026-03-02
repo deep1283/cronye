@@ -84,9 +84,6 @@ function formatBytes(value?: number) {
 
 function parseAPIError(error: unknown) {
   if (error instanceof APIError) {
-    if (error.status === 402 || error.message === "license_required") {
-      return "license_required_activate_to_continue";
-    }
     return error.message;
   }
   if (error instanceof Error) return error.message;
