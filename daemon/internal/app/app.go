@@ -75,7 +75,15 @@ func New(cfg config.Config, logger *slog.Logger) (*App, error) {
 			return err
 		},
 	)
-	runnerSvc := runner.NewService(logger.With("component", "runner"), jobRepo, runRepo, alertsSvc, eventsRepo, outputDir)
+	runnerSvc := runner.NewService(
+		logger.With("component", "runner"),
+		jobRepo,
+		runRepo,
+		alertsSvc,
+		eventsRepo,
+		outputDir,
+		cfg.RunnerConcurrency,
+	)
 
 	startedAt := time.Now().UTC()
 	apiHandler := api.NewRouter(api.Dependencies{
@@ -143,6 +151,7 @@ func (a *App) Run() error {
 		"ui_dist_dir", a.cfg.UIDistDir,
 		"registered_jobs", a.scheduler.RegisteredJobs(),
 		"runner_running", a.runner.Running(),
+		"runner_workers", a.runner.WorkerCount(),
 		"maintenance_running", a.maintenanceWorker.Running(),
 	)
 	if a.resolvedUIDistDir == "" {

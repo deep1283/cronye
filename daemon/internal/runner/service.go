@@ -35,7 +35,6 @@ type JobRepository interface {
 
 type RunRepository interface {
 	ClaimNextDue(ctx context.Context) (runs.Record, error)
-	CountRunningByJob(ctx context.Context, jobID, excludeRunID string) (int, error)
 	MarkFinished(ctx context.Context, id, status string, exitCode *int, errorMsg, outputPath, outputTail string, durationMS int64) error
 	CreateQueuedWithAttempt(ctx context.Context, jobID string, scheduledAt time.Time, attempt int) (runs.Record, error)
 	GetByID(ctx context.Context, id string) (runs.Record, error)
@@ -60,6 +59,7 @@ type Service struct {
 
 	pollInterval time.Duration
 	rand         *rand.Rand
+	workerCount  int
 
 	mu      sync.RWMutex
 	running bool
@@ -78,7 +78,11 @@ func NewService(
 	notifier FailureNotifier,
 	eventsLogger EventLogger,
 	outputDir string,
+	workerCount int,
 ) *Service {
+	if workerCount < 1 {
+		workerCount = 1
+	}
 	return &Service{
 		logger:        logger,
 		jobs:          jobsRepo,
@@ -88,6 +92,7 @@ func NewService(
 		outputDir:     outputDir,
 		pollInterval:  1 * time.Second,
 		rand:          rand.New(rand.NewSource(time.Now().UnixNano())),
+		workerCount:   workerCount,
 		activeCancels: make(map[string]context.CancelFunc),
 		activeRunJobs: make(map[string]string),
 	}
@@ -139,6 +144,12 @@ func (s *Service) Running() bool {
 	return s.running
 }
 
+func (s *Service) WorkerCount() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.workerCount
+}
+
 func (s *Service) CancelRunningByJob(jobID string) int {
 	s.activeMu.Lock()
 	var runIDs []string
@@ -164,6 +175,17 @@ func (s *Service) CancelRunningByJob(jobID string) int {
 
 func (s *Service) loop(ctx context.Context, done chan struct{}) {
 	defer close(done)
+
+	var wg sync.WaitGroup
+	for i := 0; i < s.workerCount; i++ {
+		wg.Add(1)
+		go s.worker(ctx, &wg)
+	}
+	wg.Wait()
+}
+
+func (s *Service) worker(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	ticker := time.NewTicker(s.pollInterval)
 	defer ticker.Stop()
 
@@ -234,24 +256,6 @@ func (s *Service) processOne(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	if job.OverlapPolicy == "skip" {
-		runningCount, err := s.runs.CountRunningByJob(ctx, runRecord.JobID, runRecord.ID)
-		if err == nil && runningCount > 0 {
-			duration := time.Since(startedAt).Milliseconds()
-			_ = s.runs.MarkFinished(ctx, runRecord.ID, statusSkippedOverlap, nil, "overlap_skipped", "", "", duration)
-			s.logEvent(ctx, "warn", "job_run", "run_finished", map[string]any{
-				"run_id":       runRecord.ID,
-				"job_id":       runRecord.JobID,
-				"status":       statusSkippedOverlap,
-				"attempt":      runRecord.Attempt,
-				"duration_ms":  duration,
-				"error_msg":    "overlap_skipped",
-				"scheduled_at": runRecord.ScheduledAt,
-			})
-			return true, nil
-		}
-	}
-
 	s.logEvent(ctx, "info", "job_run", "run_started", map[string]any{
 		"run_id":       runRecord.ID,
 		"job_id":       runRecord.JobID,
@@ -260,7 +264,21 @@ func (s *Service) processOne(ctx context.Context) (bool, error) {
 	})
 
 	execCtx, execCancel := context.WithCancel(ctx)
-	s.markActive(runRecord.ID, runRecord.JobID, execCancel)
+	if !s.markActive(runRecord.ID, runRecord.JobID, execCancel, job.OverlapPolicy) {
+		execCancel()
+		duration := time.Since(startedAt).Milliseconds()
+		_ = s.runs.MarkFinished(ctx, runRecord.ID, statusSkippedOverlap, nil, "overlap_skipped", "", "", duration)
+		s.logEvent(ctx, "warn", "job_run", "run_finished", map[string]any{
+			"run_id":       runRecord.ID,
+			"job_id":       runRecord.JobID,
+			"status":       statusSkippedOverlap,
+			"attempt":      runRecord.Attempt,
+			"duration_ms":  duration,
+			"error_msg":    "overlap_skipped",
+			"scheduled_at": runRecord.ScheduledAt,
+		})
+		return true, nil
+	}
 	result := s.execute(execCtx, runRecord.ID, job)
 	s.clearActive(runRecord.ID)
 	durationMS := time.Since(startedAt).Milliseconds()
@@ -556,11 +574,21 @@ func (s *Service) logEvent(ctx context.Context, level, category, message string,
 	}
 }
 
-func (s *Service) markActive(runID, jobID string, cancel context.CancelFunc) {
+func (s *Service) markActive(runID, jobID string, cancel context.CancelFunc, overlapPolicy string) bool {
 	s.activeMu.Lock()
 	defer s.activeMu.Unlock()
+
+	if overlapPolicy == "skip" {
+		for activeRunID, activeJobID := range s.activeRunJobs {
+			if activeRunID != runID && activeJobID == jobID {
+				return false
+			}
+		}
+	}
+
 	s.activeRunJobs[runID] = jobID
 	s.activeCancels[runID] = cancel
+	return true
 }
 
 func (s *Service) clearActive(runID string) {

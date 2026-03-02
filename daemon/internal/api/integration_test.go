@@ -87,6 +87,7 @@ func setupIntegrationHarness(t *testing.T) *integrationHarness {
 		nil,
 		eventsRepo,
 		filepath.Join(tempDir, "run-outputs"),
+		4,
 	)
 
 	if err := sched.Start(ctx); err != nil {
@@ -263,6 +264,63 @@ func TestIntegrationCancelRunningEndpoint(t *testing.T) {
 			record.Message == "cancel_running_requested" &&
 			mustStringFromMap(meta, "job_id") == jobID
 	})
+}
+
+func TestIntegrationAllowOverlapRunsInParallel(t *testing.T) {
+	t.Parallel()
+	h := setupIntegrationHarness(t)
+
+	createResp := requestJSON(t, h.router, http.MethodPost, "/jobs", map[string]any{
+		"name":              "Run Allow Overlap",
+		"type":              "shell",
+		"schedule":          "*/20 * * * *",
+		"timezone":          "UTC",
+		"enabled":           true,
+		"payload":           map[string]any{"command": shellLongRunningCommand(4)},
+		"timeout_sec":       20,
+		"retry_max":         0,
+		"retry_backoff_sec": 1,
+		"overlap_policy":    "allow",
+	}, http.StatusCreated)
+	jobID := mustString(t, createResp["id"])
+
+	for i := 0; i < 3; i++ {
+		requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/run", nil, http.StatusAccepted)
+	}
+
+	observedParallel := false
+	successCount := 0
+	deadline := time.Now().Add(20 * time.Second)
+	for time.Now().Before(deadline) {
+		runsResp := requestJSON(t, h.router, http.MethodGet, "/jobs/"+jobID+"/runs", nil, http.StatusOK)
+		items := mustArray(t, runsResp["runs"])
+		runningCount := 0
+		successCount = 0
+		for _, item := range items {
+			runMap := item.(map[string]any)
+			status := mustString(t, runMap["status"])
+			if status == "running" {
+				runningCount++
+			}
+			if status == "success" {
+				successCount++
+			}
+		}
+		if runningCount >= 2 {
+			observedParallel = true
+		}
+		if successCount >= 3 {
+			break
+		}
+		time.Sleep(150 * time.Millisecond)
+	}
+
+	if !observedParallel {
+		t.Fatalf("expected at least two runs executing in parallel for overlap allow")
+	}
+	if successCount < 3 {
+		t.Fatalf("expected 3 successful runs, got %d", successCount)
+	}
 }
 
 func TestIntegrationLifecycleAndMaintenanceEvents(t *testing.T) {

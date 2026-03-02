@@ -44,6 +44,7 @@ Optional environment variables:
 - `CRONYE_DATA_DIR` (default `var`)
 - `CRONYE_DB_PATH` (default `<CRONYE_DATA_DIR>/cronye.db`)
 - `CRONYE_UI_DIST` (default `ui/dist`; daemon also tries `../ui/dist` fallback)
+- `CRONYE_RUNNER_CONCURRENCY` (default `4`; number of concurrent run workers)
 - `CRONYE_SERVICE_NAME` (default `cronye-daemon`)
 - `CRONYE_SERVICE_LABEL` (default `com.cronye.daemon`)
 
