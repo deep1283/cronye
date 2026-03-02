@@ -4,7 +4,6 @@ import type {
   Job,
   JobType,
   JobUpsertPayload,
-  LicenseStatus,
   OverlapPolicy,
   Run,
   Settings,
@@ -141,7 +140,6 @@ function App() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [storage, setStorage] = useState<StorageUsage | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [runOutput, setRunOutput] = useState<string>("");
@@ -158,7 +156,6 @@ function App() {
     global_concurrency: 1 as 1 | 2
   });
   const [alertWebhookDraft, setAlertWebhookDraft] = useState<string>("");
-  const [licenseKeyDraft, setLicenseKeyDraft] = useState<string>("");
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
@@ -211,27 +208,13 @@ function App() {
     setAlertWebhookDraft(currentSettings.alert_webhook_url ?? "");
   }, []);
 
-  const loadLicense = useCallback(async () => {
-    const status = await api.getLicense();
-    setLicenseStatus(status);
-    return status;
-  }, []);
-
   const loadAll = useCallback(async () => {
     setBusy(true);
     setNotice(null);
     try {
-      const [, license] = await Promise.all([loadHealth(), loadLicense()]);
-      if (!license.active) {
-        setJobs([]);
-        setRuns([]);
-        setStorage(null);
-        setSettings(null);
-        return;
-      }
-
+      await loadHealth();
       await Promise.all([loadJobs(), loadStorage(), loadSettings()]);
-      if (selectedJobId && license.active) {
+      if (selectedJobId) {
         await loadRuns(selectedJobId);
       }
     } catch (error) {
@@ -239,7 +222,7 @@ function App() {
     } finally {
       setBusy(false);
     }
-  }, [loadHealth, loadJobs, loadLicense, loadRuns, loadSettings, loadStorage, selectedJobId]);
+  }, [loadHealth, loadJobs, loadRuns, loadSettings, loadStorage, selectedJobId]);
 
   useEffect(() => {
     void loadAll();
@@ -248,13 +231,11 @@ function App() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       void loadHealth();
-      void loadLicense();
-      if (!licenseStatus?.active) return;
       void loadJobs();
       if (selectedJobId) void loadRuns(selectedJobId);
     }, 8000);
     return () => window.clearInterval(interval);
-  }, [licenseStatus?.active, loadHealth, loadJobs, loadLicense, loadRuns, selectedJobId]);
+  }, [loadHealth, loadJobs, loadRuns, selectedJobId]);
 
   const selectJob = useCallback(
     async (job: Job) => {
@@ -488,36 +469,26 @@ function App() {
     }
   }, [alertWebhookDraft, settingsDraft]);
 
-  const onActivateLicense = useCallback(async () => {
-    setBusy(true);
-    setNotice(null);
-    try {
-      const status = await api.activateLicense(licenseKeyDraft.trim());
-      setLicenseStatus(status);
-      setLicenseKeyDraft("");
-      setNotice({ type: "info", text: "license_activated" });
-    } catch (error) {
-      setNotice({ type: "error", text: parseAPIError(error) });
-      await loadLicense();
-    } finally {
-      setBusy(false);
-    }
-  }, [licenseKeyDraft, loadLicense]);
-
-  const onDeactivateLicense = useCallback(async () => {
-    if (!window.confirm("Deactivate this device license?")) return;
-    setBusy(true);
-    setNotice(null);
-    try {
-      await api.deactivateLicense();
-      await loadLicense();
-      setNotice({ type: "info", text: "license_deactivated" });
-    } catch (error) {
-      setNotice({ type: "error", text: parseAPIError(error) });
-    } finally {
-      setBusy(false);
-    }
-  }, [loadLicense]);
+  const loadExampleShellJob = useCallback(() => {
+    setJobForm((previous) => ({
+      ...previous,
+      name: "Every 5 min health check",
+      type: "shell",
+      schedule: "*/5 * * * *",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      enabled: true,
+      timeoutSec: 60,
+      retryMax: 1,
+      retryBackoffSec: 10,
+      overlapPolicy: "skip",
+      shellCommand: "echo \"Cronye is running\"",
+      httpMethod: "GET",
+      httpURL: "",
+      httpHeaders: "{}",
+      httpBody: ""
+    }));
+    setNotice({ type: "info", text: "example_job_loaded" });
+  }, []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_90%_5%,#d4ede9,transparent_28%),radial-gradient(circle_at_10%_20%,#dce7f5,transparent_30%),#eef4f8] text-ink">
@@ -540,6 +511,23 @@ function App() {
 
       <main className="mx-auto grid w-full max-w-[1320px] gap-4 px-4 py-4 md:px-6 lg:grid-cols-[390px_1fr]">
         <aside className="space-y-4">
+          <section className="rounded-2xl border border-edge bg-panel p-4 shadow-card">
+            <h2 className="mb-3 font-display text-xl">Quick Start</h2>
+            <ol className="space-y-2 text-sm text-slate">
+              <li>1. Click <strong>Load Example Job</strong> or fill the form manually.</li>
+              <li>2. Click <strong>Create Job</strong>.</li>
+              <li>3. In the Jobs list, click <strong>Run now</strong>.</li>
+              <li>4. Open <strong>Run History</strong> and click <strong>View</strong> to see output.</li>
+            </ol>
+            <button
+              className="mt-3 rounded-xl border border-edge px-3 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
+              onClick={loadExampleShellJob}
+              type="button"
+            >
+              Load Example Job
+            </button>
+          </section>
+
           <section className="rounded-2xl border border-edge bg-panel p-4 shadow-card">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-xl">Jobs</h2>
@@ -628,6 +616,7 @@ function App() {
                   className="w-full rounded-xl border border-edge bg-white px-3 py-2"
                   value={jobForm.name}
                   onChange={(event) => setJobForm((prev) => ({ ...prev, name: event.target.value }))}
+                  placeholder="Example: Every 5 min health check"
                   required
                 />
               </label>
@@ -673,6 +662,9 @@ function App() {
                   onChange={(event) => setJobForm((prev) => ({ ...prev, schedule: event.target.value }))}
                   required
                 />
+                <p className="mt-1 text-xs text-slate">
+                  Example: <code>*/5 * * * *</code> runs every 5 minutes.
+                </p>
               </label>
 
               <label className="block text-sm">
@@ -742,6 +734,7 @@ function App() {
                     onChange={(event) =>
                       setJobForm((prev) => ({ ...prev, shellCommand: event.target.value }))
                     }
+                    placeholder='echo "Cronye is running"'
                     required
                   />
                 </label>
@@ -884,7 +877,11 @@ function App() {
               </div>
 
               {!selectedJob ? (
-                <p className="text-slate">Select a job to view run history.</p>
+                <div className="rounded-xl border border-edge bg-white p-3 text-sm text-slate">
+                  <p className="font-semibold text-ink">How to run your first job</p>
+                  <p className="mt-1">Create a job on the left, then click <strong>Run now</strong> in the Jobs list.</p>
+                  <p className="mt-1">After that, select the job to view run history and output.</p>
+                </div>
               ) : (
                 <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
                   <div className="overflow-hidden rounded-xl border border-edge">
@@ -1134,46 +1131,6 @@ function App() {
                 </p>
               </div>
 
-              <div className="mt-5 border-t border-edge pt-4">
-                <h3 className="mb-2 text-sm font-semibold">License</h3>
-                <p className="text-xs text-slate">
-                  Status: {licenseStatus?.status ?? "unknown"} • Device: {licenseStatus?.device_id ?? "-"}
-                </p>
-                {licenseStatus?.active && (
-                  <p className="mt-1 text-xs text-slate">
-                    {licenseStatus.email} • {licenseStatus.plan} • expires {formatDate(licenseStatus.expires_at)}
-                  </p>
-                )}
-
-                <label className="mt-3 block text-sm">
-                  <span className="mb-1 block text-slate">Activate license key</span>
-                  <textarea
-                    className="min-h-24 w-full rounded-xl border border-edge px-3 py-2 font-mono text-xs"
-                    value={licenseKeyDraft}
-                    onChange={(event) => setLicenseKeyDraft(event.target.value)}
-                    placeholder="paste license key"
-                  />
-                </label>
-
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accentStrong"
-                    onClick={() => void onActivateLicense()}
-                    disabled={busy}
-                  >
-                    Activate
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-danger hover:bg-red-50"
-                    onClick={() => void onDeactivateLicense()}
-                    disabled={busy}
-                  >
-                    Deactivate
-                  </button>
-                </div>
-              </div>
             </section>
           )}
         </section>
