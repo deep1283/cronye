@@ -117,6 +117,10 @@ const downloadOptions: DownloadOption[] = [
   }
 ];
 
+const supportURL = process.env.NEXT_PUBLIC_SUPPORT_URL?.trim() || "/support";
+const isSupportExternal =
+  supportURL.startsWith("http://") || supportURL.startsWith("https://");
+
 function FadeIn({
   children,
   delay = 0
@@ -255,6 +259,14 @@ export default function HomePage() {
             <a href="#docs">Docs</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
+            <a
+              href={supportURL}
+              {...(isSupportExternal
+                ? { target: "_blank", rel: "noreferrer" }
+                : undefined)}
+            >
+              Support
+            </a>
           </nav>
 
           <a className="btn btn-subtle btn-compact" href="#download">
@@ -454,6 +466,7 @@ export default function HomePage() {
                 <li>Retention and purge controls</li>
                 <li>Apple Silicon Mac support</li>
               </ul>
+              <p className="price-sub">Optional support keeps Cronye improving.</p>
               <a
                 className="btn btn-primary"
                 href="https://github.com/deep1283/cronye"
@@ -461,6 +474,15 @@ export default function HomePage() {
                 rel="noreferrer"
               >
                 Star on GitHub
+              </a>
+              <a
+                className="btn btn-subtle"
+                href={supportURL}
+                {...(isSupportExternal
+                  ? { target: "_blank", rel: "noreferrer" }
+                  : undefined)}
+              >
+                Support Cronye ($9)
               </a>
             </article>
           </FadeIn>

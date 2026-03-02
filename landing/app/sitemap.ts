@@ -11,6 +11,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date()
     },
     {
+      url: "https://cronye.app/support",
+      lastModified: new Date()
+    },
+    {
       url: "https://cronye.app/terms",
       lastModified: new Date()
     }
