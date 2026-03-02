@@ -16,19 +16,10 @@ export default function PrivacyPage() {
         </p>
 
         <div className="policy-section">
-          <h2>What we use for account recovery</h2>
+          <h2>No account required</h2>
           <p>
-            If you choose Google sign-in for license recovery, we store your Google account ID and
-            email together with your paid license record so you can get your key again after
-            reinstalling.
-          </p>
-        </div>
-
-        <div className="policy-section">
-          <h2>Payments</h2>
-          <p>
-            Checkout is handled by Dodo Payments. We store purchase intent details needed to issue
-            and recover your license key.
+            Cronye does not require sign-in to run locally. We do not require Google login or
+            payment account linking for product access.
           </p>
         </div>
 

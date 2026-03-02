@@ -11,23 +11,15 @@ export default function TermsPage() {
         <p className="eyebrow">Terms of Service</p>
         <h1>Simple terms for a local-first product</h1>
         <p className="lead">
-          Cronye runs completely on your own system. These terms cover purchase, license use, and
-          support expectations.
+          Cronye runs completely on your own system. These terms cover open-source usage and support
+          expectations.
         </p>
 
         <div className="policy-section">
-          <h2>License access</h2>
+          <h2>Open-source use</h2>
           <p>
-            A successful purchase provides a license key for using Cronye. You can recover your key
-            later through the recovery flow.
-          </p>
-        </div>
-
-        <div className="policy-section">
-          <h2>Pricing</h2>
-          <p>
-            Pricing shown at checkout applies to your purchase. The current plan is a one-time
-            payment for lifetime access to the local Cronye runtime.
+            Cronye is provided as open-source software for local use. You are responsible for how
+            jobs are configured and executed on your machine.
           </p>
         </div>
 
@@ -42,9 +34,8 @@ export default function TermsPage() {
         <div className="policy-section">
           <h2>Support</h2>
           <p>
-            We provide help for checkout and license access. For help, support, or complaints,
-            email <a href="mailto:deepmishra1283@gmail.com">deepmishra1283@gmail.com</a> or
-            message{" "}
+            For help, support, or complaints, email{" "}
+            <a href="mailto:deepmishra1283@gmail.com">deepmishra1283@gmail.com</a> or message{" "}
             <a href="https://x.com/deepmishra1283" target="_blank" rel="noreferrer">
               @deepmishra1283 on X
             </a>

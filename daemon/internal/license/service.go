@@ -61,6 +61,9 @@ func (s *Service) Status(ctx context.Context) (Status, error) {
 	token, err := s.settings.Get(ctx, settings.KeyLicenseToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			if len(s.publicKey) == 0 {
+				return s.openSourceStatus(), nil
+			}
 			return s.baseStatus("missing", "license_not_activated"), nil
 		}
 		return Status{}, err
@@ -141,13 +144,23 @@ func (s *Service) baseStatus(status, message string) Status {
 	}
 }
 
+func (s *Service) openSourceStatus() Status {
+	return Status{
+		Active:   true,
+		Status:   "open_source",
+		Message:  "license_checks_disabled",
+		DeviceID: s.deviceID,
+		Plan:     "community",
+	}
+}
+
 func (s *Service) verify(token string) (Status, Claims, error) {
 	if strings.TrimSpace(token) == "" {
 		return s.baseStatus("missing", "license_not_activated"), Claims{}, errors.New("license_not_activated")
 	}
 
 	if len(s.publicKey) == 0 {
-		return s.baseStatus("unconfigured", "license_public_key_not_configured"), Claims{}, errors.New("license_public_key_not_configured")
+		return s.openSourceStatus(), Claims{}, nil
 	}
 
 	claims, err := VerifyToken(s.publicKey, token)

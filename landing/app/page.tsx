@@ -59,8 +59,8 @@ const faqItems: Faq[] = [
     a: "No. Jobs run when the daemon is running. On restart, startup catch-up can replay missed windows."
   },
   {
-    q: "What does the $9 plan include?",
-    a: "Lifetime access to the local cron product: scheduler, retries, logs, retention, and cleanup controls."
+    q: "Is Cronye free to use?",
+    a: "Yes. Cronye is open source and free to use on your own machine."
   },
   {
     q: "Can I use shell and HTTP jobs together?",
@@ -92,16 +92,16 @@ const gettingStartedSteps: GettingStartedStep[] = [
     body: "Download Cronye for macOS (Apple Silicon) and install it like a normal desktop app."
   },
   {
-    title: "Get your license key",
-    body: "Open checkout, complete the one-time payment, and copy your key from the success screen."
-  },
-  {
-    title: "Activate inside Cronye",
-    body: "Open the app, go to Settings → License, paste the key, and click Activate."
+    title: "Launch Cronye",
+    body: "Open the app from Applications. Cronye runs on your own system and opens the local dashboard."
   },
   {
     title: "Create your first automation",
     body: "Add a job, choose when it should run, and enter the action you want Cronye to perform."
+  },
+  {
+    title: "Test and adjust quickly",
+    body: "Run a job manually and tweak schedule, retries, and timeout until it behaves the way you want."
   },
   {
     title: "Monitor results anytime",
@@ -278,11 +278,16 @@ export default function HomePage() {
                 <a className="btn btn-primary" href="#download">
                   Download App
                 </a>
-                <a className="btn btn-subtle" href="/checkout">
-                  Buy License
+                <a
+                  className="btn btn-subtle"
+                  href="https://github.com/deep1283/cronye"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View Source
                 </a>
-                <a className="btn btn-secondary" href="/recover">
-                  Recover License
+                <a className="btn btn-secondary" href="#docs">
+                  Quick Start
                 </a>
               </div>
 
@@ -315,7 +320,7 @@ export default function HomePage() {
               <p className="eyebrow">Step 1: Download</p>
               <h2>Download Cronye for your OS</h2>
               <p className="section-lead">
-                Install Cronye on your Apple Silicon Mac, then purchase a license key to activate access in the app.
+                Install Cronye on your Apple Silicon Mac and start automating in minutes.
               </p>
             </div>
           </FadeIn>
@@ -341,8 +346,7 @@ export default function HomePage() {
 
           <FadeIn delay={0.16}>
             <p className="download-next">
-              Step 2: after installing, purchase your license key on{" "}
-              <a href="/checkout">checkout</a> and activate it in the local UI.
+              After installing, launch Cronye from Applications and open the local dashboard.
             </p>
           </FadeIn>
         </div>
@@ -424,11 +428,8 @@ export default function HomePage() {
 
           <FadeIn delay={0.24}>
             <div className="docs-links">
-              <a className="btn btn-primary" href="/checkout">
-                Open Checkout
-              </a>
-              <a className="btn btn-subtle" href="/recover">
-                Recover License
+              <a className="btn btn-primary" href="#download">
+                Download Cronye
               </a>
             </div>
           </FadeIn>
@@ -438,14 +439,14 @@ export default function HomePage() {
       <section id="pricing" className="section">
         <div className="container pricing-shell">
           <FadeIn>
-              <p className="eyebrow">Simple pricing</p>
-              <h2>One-time payment. Own your runtime.</h2>
+              <p className="eyebrow">Open source</p>
+              <h2>Free local automation for builders</h2>
           </FadeIn>
 
           <FadeIn delay={0.05}>
             <article className="price-card">
-              <p className="price-amount">$9</p>
-              <p className="price-sub">Lifetime plan for Cronye local cron product.</p>
+              <p className="price-amount">$0</p>
+              <p className="price-sub">Open-source local cron product.</p>
               <ul>
                 <li>Shell and HTTP jobs</li>
                 <li>Retries with backoff and jitter</li>
@@ -453,8 +454,13 @@ export default function HomePage() {
                 <li>Retention and purge controls</li>
                 <li>Apple Silicon Mac support</li>
               </ul>
-              <a className="btn btn-primary" href="/checkout">
-                Start Checkout
+              <a
+                className="btn btn-primary"
+                href="https://github.com/deep1283/cronye"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Star on GitHub
               </a>
             </article>
           </FadeIn>
@@ -522,14 +528,13 @@ export default function HomePage() {
                 <a href="#docs">Docs</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
-                <a href="/checkout">Checkout</a>
+                <a href="https://github.com/deep1283/cronye" target="_blank" rel="noreferrer">GitHub</a>
               </nav>
             </div>
 
             <div className="footer-nav-group">
               <p className="footer-label">Company</p>
               <nav className="footer-links" aria-label="Footer company links">
-                <a href="/recover">Recover License</a>
                 <a href="/privacy">Privacy</a>
                 <a href="/terms">Terms</a>
               </nav>

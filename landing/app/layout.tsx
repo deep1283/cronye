@@ -4,16 +4,16 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cronye.app"),
-  title: "Cronye | Premium Cron Automation",
+  title: "Cronye | Open-Source Cron Automation",
   description:
-    "A premium, local-first automation daemon engineered in Go. Control your ecosystem with precision timing, beautiful logs, and zero latency.",
+    "A local-first open-source automation daemon engineered in Go. Run reliable schedules with clear logs and retries on your own system.",
   icons: {
     icon: [{ url: "/icon.png", type: "image/png" }],
     shortcut: ["/icon.png"],
     apple: [{ url: "/apple-icon.png", type: "image/png" }]
   },
   openGraph: {
-    title: "Cronye | Premium Cron Automation",
+    title: "Cronye | Open-Source Cron Automation",
     description:
       "Reliable local-first automation. Control your ecosystem with precision.",
     type: "website",
@@ -23,15 +23,15 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Cronye premium cron automation"
+        alt: "Cronye open-source cron automation"
       }
     ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cronye | Premium Cron Automation",
+    title: "Cronye | Open-Source Cron Automation",
     description:
-      "A premium, local-first automation daemon engineered in Go.",
+      "A local-first open-source automation daemon engineered in Go.",
     images: ["/opengraph-image"]
   }
 };

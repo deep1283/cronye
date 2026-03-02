@@ -11,9 +11,9 @@ Examples:
 - `/health` and `/api/health`
 - `/jobs` and `/api/jobs`
 
-License enforcement:
-- `GET /license`, `POST /license/activate`, `POST /license/deactivate`, and `GET /health` are always available.
-- All other endpoints require an active license and return `402` with `{"error":"license_required"}` when inactive.
+License behavior:
+- In open-source mode (default), all endpoints are available without activation.
+- `GET /license`, `POST /license/activate`, and `POST /license/deactivate` are retained for backward compatibility.
 
 ## Health
 
@@ -152,7 +152,7 @@ Request body:
 ## License
 
 ### `GET /license`
-Get current license state for this device.
+Get current license state for this device (returns `open_source` in default mode).
 
 ### `POST /license/activate`
 Activate signed license token.

@@ -106,7 +106,6 @@ func NewRouter(deps Dependencies) http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RealIP)
-	r.Use(requireActiveLicenseMiddleware(deps))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
@@ -792,40 +791,6 @@ func NewRouter(deps Dependencies) http.Handler {
 	})
 
 	return r
-}
-
-func requireActiveLicenseMiddleware(deps Dependencies) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if deps.License == nil || isLicenseExemptPath(r.URL.Path) || r.Method == http.MethodOptions {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			status, err := deps.License.Status(r.Context())
-			if err != nil {
-				deps.Logger.Error("license status check failed", "path", r.URL.Path, "error", err)
-				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
-				return
-			}
-			if status.Active {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			writeJSON(w, http.StatusPaymentRequired, map[string]any{
-				"error":  "license_required",
-				"status": status,
-			})
-		})
-	}
-}
-
-func isLicenseExemptPath(path string) bool {
-	if path == "/health" {
-		return true
-	}
-	return path == "/license" || strings.HasPrefix(path, "/license/")
 }
 
 func decodeJSON(r *http.Request, dst any) error {

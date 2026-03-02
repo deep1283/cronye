@@ -59,10 +59,6 @@ cp -R "${ROOT_DIR}/ui/dist" "${UI_DIR}/dist"
 cp "${WORK_DIR}/${RELEASE_BIN_NAME}" "${BIN_DIR}/${RELEASE_BIN_NAME}"
 chmod +x "${BIN_DIR}/${RELEASE_BIN_NAME}"
 
-if [[ -n "${CRONYE_LICENSE_PUBLIC_KEY:-}" ]]; then
-  printf "%s" "${CRONYE_LICENSE_PUBLIC_KEY}" > "${RES_DIR}/license_public_key.txt"
-fi
-
 cat > "${LAUNCHER_PATH}" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -75,7 +71,6 @@ UI_DIST="${RESOURCES_DIR}/ui/dist"
 DATA_DIR="${HOME}/Library/Application Support/Cronye"
 LOG_DIR="${HOME}/Library/Logs/Cronye"
 PID_FILE="${DATA_DIR}/daemon.pid"
-KEY_FILE="${RESOURCES_DIR}/license_public_key.txt"
 
 mkdir -p "${DATA_DIR}" "${LOG_DIR}"
 
@@ -96,9 +91,6 @@ is_pid_running() {
 if ! is_pid_running; then
   export CRONYE_DATA_DIR="${DATA_DIR}"
   export CRONYE_UI_DIST="${UI_DIST}"
-  if [[ -f "${KEY_FILE}" ]]; then
-    export CRONYE_LICENSE_PUBLIC_KEY="$(tr -d '\r\n ' < "${KEY_FILE}")"
-  fi
 
   "${BIN}" >> "${LOG_DIR}/daemon.log" 2>&1 &
   echo "$!" > "${PID_FILE}"

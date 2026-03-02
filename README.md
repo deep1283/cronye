@@ -2,6 +2,10 @@
 
 Local-first cron automation product.
 
+## License
+
+This project is open source under the [MIT License](./LICENSE).
+
 ## Product Goal
 
 Reliable automations on your own machine, without cloud lock-in.
@@ -76,7 +80,6 @@ This command:
 Bundle layout:
 
 - `cronye-daemon` (or `.exe`)
-- `cronye-licensegen` (or `.exe`)
 - `ui/dist/*`
 - `checksums.txt`
 - `README-daemon.md`
@@ -104,7 +107,7 @@ make release-matrix VERSION=0.1.0
 Create a user-facing installer (`Cronye.app` + drag-to-Applications DMG):
 
 ```bash
-CRONYE_LICENSE_PUBLIC_KEY=<base64-ed25519-public-key> make package-macos-dmg VERSION=0.1.0
+make package-macos-dmg VERSION=0.1.0
 ```
 
 Output:
@@ -116,7 +119,6 @@ Notes:
 
 - run this target on macOS
 - this installer target currently supports Apple Silicon (`arm64`) only
-- if `CRONYE_LICENSE_PUBLIC_KEY` is set, it is bundled into the app so paid license activation works out of the box
 
 ## Service Commands
 
@@ -134,8 +136,7 @@ From a built daemon binary:
 - Startup: < 2 seconds
 - Disk growth: < 100 MB/month by default
 
-## Pricing
+## Distribution
 
-- MVP: `$39` one-time (cron product only)
-- AI add-on deferred to post-MVP (v1.1/v1.2)
-- Payment provider integration is deferred and will use Dodo Payments (not Stripe)
+- Open-source and free to use.
+- Current installer support: macOS Apple Silicon DMG.

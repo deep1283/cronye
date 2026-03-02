@@ -15,8 +15,7 @@ Week 1 scope currently implemented:
 - Terminal failure webhook alerts configurable via `PUT /settings/alerts`
 - Log cap enforcement deletes oldest persisted run output files when above `max_log_bytes`
 - Maintenance APIs: `POST /maintenance/purge`, `GET /storage/usage`, `PUT /settings/retention`, `GET /settings`
-- License APIs: `GET /license`, `POST /license/activate`, `POST /license/deactivate`
-- License enforcement: all non-license API routes require an active signed license
+- License compatibility APIs: `GET /license`, `POST /license/activate`, `POST /license/deactivate`
 - Automatic maintenance worker runs every 10 minutes:
   - nightly retention purge (once per local calendar day)
   - periodic log-cap enforcement
@@ -45,17 +44,8 @@ Optional environment variables:
 - `CRONYE_DATA_DIR` (default `var`)
 - `CRONYE_DB_PATH` (default `<CRONYE_DATA_DIR>/cronye.db`)
 - `CRONYE_UI_DIST` (default `ui/dist`; daemon also tries `../ui/dist` fallback)
-- `CRONYE_LICENSE_PUBLIC_KEY` (base64 encoded ed25519 public key for license verification)
 - `CRONYE_SERVICE_NAME` (default `cronye-daemon`)
 - `CRONYE_SERVICE_LABEL` (default `com.cronye.daemon`)
-
-For local development, create `daemon/.env.local` with:
-
-```bash
-CRONYE_LICENSE_PUBLIC_KEY=<base64-ed25519-public-key>
-```
-
-`make run` automatically loads `daemon/.env.local` if present.
 
 ## Release Bundle Runtime
 
@@ -86,16 +76,7 @@ Notes:
 - Linux uses `systemd` and requires root privileges
 - Windows uses `sc.exe` service commands
 
-## License Key Generation (Issuer Side)
+## Open-source mode
 
-Generate a signed key using an ed25519 PKCS8 private key:
-
-```bash
-go run ./cmd/licensegen \
-  --private-key /abs/path/license-private.pem \
-  --email customer@example.com \
-  --plan lifetime \
-  --device-limit 1
-```
-
-Output is a license key token for `/license/activate`.
+Cronye runs in open-source mode by default. If no license public key is configured, APIs remain
+available without activation.
