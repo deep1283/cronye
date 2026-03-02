@@ -54,6 +54,9 @@ func TestNewHTTPHandlerServesAPIAndUI(t *testing.T) {
 	if uiRes.Code != http.StatusOK || !strings.Contains(uiRes.Body.String(), "ui-index") {
 		t.Fatalf("expected root UI index response, got status=%d body=%q", uiRes.Code, uiRes.Body.String())
 	}
+	if got := uiRes.Header().Get("Cache-Control"); got != "no-store, max-age=0" {
+		t.Fatalf("expected no-store cache-control on index, got %q", got)
+	}
 
 	assetReq := httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
 	assetRes := httptest.NewRecorder()
@@ -74,6 +77,16 @@ func TestNewHTTPHandlerServesAPIAndUI(t *testing.T) {
 	handler.ServeHTTP(spaFallbackRes, spaFallbackReq)
 	if spaFallbackRes.Code != http.StatusOK || !strings.Contains(spaFallbackRes.Body.String(), "ui-index") {
 		t.Fatalf("expected SPA fallback to index, got status=%d body=%q", spaFallbackRes.Code, spaFallbackRes.Body.String())
+	}
+	if got := spaFallbackRes.Header().Get("Cache-Control"); got != "no-store, max-age=0" {
+		t.Fatalf("expected no-store cache-control on SPA fallback, got %q", got)
+	}
+
+	faviconReq := httptest.NewRequest(http.MethodGet, "/favicon.png", nil)
+	faviconRes := httptest.NewRecorder()
+	handler.ServeHTTP(faviconRes, faviconReq)
+	if got := faviconRes.Header().Get("Cache-Control"); got != "no-cache, max-age=0, must-revalidate" {
+		t.Fatalf("expected no-cache cache-control on favicon, got %q", got)
 	}
 }
 

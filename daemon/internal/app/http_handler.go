@@ -28,6 +28,13 @@ func newHTTPHandler(apiHandler http.Handler, uiDistDir string) (http.Handler, st
 
 	fileServer := http.FileServer(http.Dir(uiDir))
 	indexPath := filepath.Join(uiDir, "index.html")
+	serveIndex := func(w http.ResponseWriter, r *http.Request) {
+		// Always revalidate shell HTML so UI updates are picked up immediately.
+		w.Header().Set("Cache-Control", "no-store, max-age=0")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		http.ServeFile(w, r, indexPath)
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isAPIPath(r.URL.Path) {
@@ -42,17 +49,25 @@ func newHTTPHandler(apiHandler http.Handler, uiDistDir string) (http.Handler, st
 
 		path := strings.TrimPrefix(r.URL.Path, "/")
 		if path == "" {
-			http.ServeFile(w, r, indexPath)
+			serveIndex(w, r)
+			return
+		}
+
+		if strings.EqualFold(path, "index.html") {
+			serveIndex(w, r)
 			return
 		}
 
 		if strings.Contains(filepath.Base(path), ".") {
+			if strings.EqualFold(filepath.Base(path), "favicon.png") {
+				w.Header().Set("Cache-Control", "no-cache, max-age=0, must-revalidate")
+			}
 			fileServer.ServeHTTP(w, r)
 			return
 		}
 
 		// SPA route fallback.
-		http.ServeFile(w, r, indexPath)
+		serveIndex(w, r)
 	}), uiDir
 }
 
