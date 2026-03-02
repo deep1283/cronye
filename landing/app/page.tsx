@@ -125,7 +125,7 @@ const downloadOptions: DownloadOption[] = [
   }
 ];
 
-const supportURL = process.env.NEXT_PUBLIC_SUPPORT_URL?.trim() || "/support";
+const supportURL = process.env.NEXT_PUBLIC_SUPPORT_URL?.trim() || "/api/support/checkout";
 const isSupportExternal =
   supportURL.startsWith("http://") || supportURL.startsWith("https://");
 

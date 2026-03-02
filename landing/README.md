@@ -36,17 +36,18 @@ Landing download button (macOS Apple Silicon MVP):
 
 ```bash
 NEXT_PUBLIC_DOWNLOAD_URL_MAC=/api/download/macos
-# Optional support link override (default is /support)
-NEXT_PUBLIC_SUPPORT_URL=/support
+# Optional support link override (default is one-click /api/support/checkout)
+NEXT_PUBLIC_SUPPORT_URL=/api/support/checkout
 ```
 
-Optional support checkout via Dodo API (used by `/support`):
+Optional support checkout via Dodo API (used by `/api/support/checkout`):
 
 ```bash
 DODO_PAYMENTS_ENVIRONMENT=test_mode
 DODO_PAYMENTS_API_KEY=dp_test_xxx
 DODO_PRODUCT_ID=pdt_xxx
 DODO_RETURN_URL_BASE=http://localhost:3000
+SUPPORT_CHECKOUT_EMAIL_DOMAIN=cronye.app
 ```
 
 For private GitHub repos, the landing app can proxy release assets:
