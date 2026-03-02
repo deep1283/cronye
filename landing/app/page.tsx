@@ -65,6 +65,10 @@ const faqItems: Faq[] = [
   {
     q: "Can I use shell and HTTP jobs together?",
     a: "Yes. You can create shell jobs and HTTP request jobs from the same local dashboard."
+  },
+  {
+    q: "macOS says Cronye cannot be verified. What should I do?",
+    a: "Move Cronye to Applications, then open System Settings > Privacy & Security and click Open Anyway for Cronye. If prompted again, right-click Cronye in Applications and choose Open."
   }
 ];
 
@@ -94,6 +98,10 @@ const gettingStartedSteps: GettingStartedStep[] = [
   {
     title: "Launch Cronye",
     body: "Open the app from Applications. Cronye runs on your own system and opens the local dashboard."
+  },
+  {
+    title: "If macOS blocks launch",
+    body: "Go to System Settings → Privacy & Security, click Open Anyway for Cronye, then open the app again from Applications."
   },
   {
     title: "Create your first automation",
