@@ -14,12 +14,9 @@ export type DodoCheckoutSession = {
 };
 
 function dodoBaseURL() {
-  const environment =
-    process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode"
-      ? "live_mode"
-      : "test_mode";
+  const environment = process.env.DODO_PAYMENTS_ENVIRONMENT?.trim();
   return environment === "live_mode"
-    ? "https://api.dodopayments.com"
+    ? "https://live.dodopayments.com"
     : "https://test.dodopayments.com";
 }
 
@@ -45,7 +42,13 @@ async function dodoRequest<T>(
     body: init?.bodyJSON ? JSON.stringify(init.bodyJSON) : init?.body
   });
 
-  const payload = (await response.json()) as Record<string, unknown>;
+  const rawText = await response.text();
+  let payload: Record<string, unknown> = {};
+  try {
+    payload = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : {};
+  } catch {
+    payload = { error: rawText };
+  }
   if (!response.ok) {
     const message =
       (typeof payload.detail === "string" && payload.detail) ||
@@ -60,7 +63,7 @@ async function dodoRequest<T>(
 export async function createCheckoutSession(
   input: DodoCheckoutSessionCreateRequest
 ): Promise<DodoCheckoutSession> {
-  return dodoRequest<DodoCheckoutSession>("/checkout_sessions", {
+  return dodoRequest<DodoCheckoutSession>("/checkouts", {
     method: "POST",
     bodyJSON: input
   });

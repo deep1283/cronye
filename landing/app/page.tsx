@@ -273,7 +273,7 @@ export default function HomePage() {
                 ? { target: "_blank", rel: "noreferrer" }
                 : undefined)}
             >
-              Support
+              Buy me a coffee
             </a>
           </nav>
 
