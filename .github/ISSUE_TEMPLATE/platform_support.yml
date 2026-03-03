@@ -1,0 +1,59 @@
+name: Platform Support (Windows/Linux)
+description: Propose or volunteer platform support work for Windows and Linux builds.
+title: "[Platform]: "
+labels:
+  - enhancement
+  - platform
+body:
+  - type: dropdown
+    id: target-platform
+    attributes:
+      label: Target platform
+      description: Which platform is this issue targeting?
+      options:
+        - Windows x64
+        - Linux x64
+        - Both Windows and Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What exactly should be delivered?
+      placeholder: "Example: Add reproducible build + release packaging for Windows x64 with docs and CI checks."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Required deliverables
+      description: Contributor should include these as part of completion.
+      value: |
+        - Build pipeline for the target OS
+        - Packaged artifact suitable for end users
+        - CI validation for the target OS
+        - Updated docs for install and run steps
+        - Release asset naming and upload notes
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Check all that apply to this issue.
+      options:
+        - label: Build works on target platform in CI.
+        - label: Release artifact can be downloaded and executed on target platform.
+        - label: README/docs are updated with platform-specific instructions.
+        - label: Existing macOS flow remains unchanged.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Links, constraints, or implementation notes.
+      placeholder: "Optional"
