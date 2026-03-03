@@ -24,7 +24,7 @@ function dodoBaseURL() {
 }
 
 function dodoAPIKey() {
-  const key = process.env.DODO_PAYMENTS_API_KEY;
+  const key = process.env.DODO_PAYMENTS_API_KEY?.trim();
   if (!key) {
     throw new Error("dodo_api_key_missing");
   }

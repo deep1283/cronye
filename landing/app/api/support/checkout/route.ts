@@ -18,13 +18,19 @@ function supportFallbackURL(req: NextRequest) {
   );
 }
 
+function fallback(req: NextRequest, reason: string) {
+  const response = NextResponse.redirect(supportFallbackURL(req));
+  response.headers.set("x-support-fallback-reason", reason);
+  return response;
+}
+
 export async function GET(req: NextRequest) {
   const email = supportCheckoutEmail();
   const name = "Cronye Supporter";
 
   const productID = process.env.DODO_PRODUCT_ID?.trim();
   if (!productID) {
-    return NextResponse.redirect(supportFallbackURL(req));
+    return fallback(req, "dodo_product_id_missing");
   }
 
   const returnBase = process.env.DODO_RETURN_URL_BASE?.trim() || req.nextUrl.origin;
@@ -42,6 +48,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(checkout.checkout_url);
   } catch (error) {
-    return NextResponse.redirect(supportFallbackURL(req));
+    const reason =
+      error instanceof Error && error.message ? error.message : "support_checkout_create_failed";
+    console.error("[support-checkout] fallback", {
+      reason,
+      hasProductID: Boolean(productID),
+      environment: process.env.DODO_PAYMENTS_ENVIRONMENT ?? "unset"
+    });
+    return fallback(req, reason);
   }
 }
