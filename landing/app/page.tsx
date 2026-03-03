@@ -263,10 +263,11 @@ export default function HomePage() {
           </a>
 
           <nav className="nav-links" aria-label="Primary">
-            <a href="#features">Features</a>
             <a href="#docs">Docs</a>
             <a href="#pricing">Pricing</a>
-            <a href="#faq">FAQ</a>
+            <a href="https://github.com/deep1283/cronye" target="_blank" rel="noreferrer">
+              Star us on GitHub
+            </a>
             <a
               href={supportURL}
               {...(isSupportExternal
