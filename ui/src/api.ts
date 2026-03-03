@@ -1,6 +1,8 @@
 import type {
   CancelRunningResult,
+  DeleteRunResult,
   HealthResponse,
+  JobRunHistoryPurgePayload,
   Job,
   JobUpsertPayload,
   PurgePayload,
@@ -74,10 +76,17 @@ export const api = {
     request<CancelRunningResult>(`/jobs/${id}/cancel-running`, { method: "POST" }),
   listRunsByJob: (id: string) => request<{ runs: Run[] }>(`/jobs/${id}/runs`),
   getRun: (id: string) => request<Run>(`/runs/${id}`),
+  deleteRun: (id: string) =>
+    request<DeleteRunResult>(`/runs/${id}`, { method: "DELETE" }),
   getRunOutput: (id: string) => requestText(`/runs/${id}/output`),
   getStorageUsage: () => request<StorageUsage>("/storage/usage"),
   purge: (payload: PurgePayload) =>
     request<PurgeResult>("/maintenance/purge", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  purgeJobRuns: (id: string, payload: JobRunHistoryPurgePayload) =>
+    request<{ deleted_runs: number; deleted_output_files: number }>(`/jobs/${id}/runs/purge`, {
       method: "POST",
       body: JSON.stringify(payload)
     }),

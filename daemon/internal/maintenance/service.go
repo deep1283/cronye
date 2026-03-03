@@ -92,6 +92,132 @@ func (s *Service) PurgeRuns(ctx context.Context, olderThanDays int, successOnly 
 	}, nil
 }
 
+func (s *Service) PurgeJobRunsKeepRecent(ctx context.Context, jobID string, keepRecent int, successOnly bool) (PurgeResult, error) {
+	jobID = strings.TrimSpace(jobID)
+	if jobID == "" {
+		return PurgeResult{}, errors.New("job_id_required")
+	}
+	if keepRecent < 0 {
+		return PurgeResult{}, errors.New("keep_recent_must_be_non_negative")
+	}
+
+	subquery := `SELECT id
+		FROM job_runs
+		WHERE job_id = ?`
+	if successOnly {
+		subquery += ` AND status = 'success'`
+	}
+	subquery += ` ORDER BY COALESCE(started_at, scheduled_at, created_at) DESC
+		LIMIT -1 OFFSET ?`
+
+	args := []any{jobID, keepRecent}
+	whereClause := fmt.Sprintf(`job_id = ? AND id IN (%s)`, subquery)
+	if successOnly {
+		whereClause += ` AND status = 'success'`
+	}
+	deleteArgs := append([]any{jobID}, args...)
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		fmt.Sprintf(`SELECT DISTINCT output_path FROM job_runs WHERE %s AND output_path IS NOT NULL AND output_path != ''`, whereClause),
+		deleteArgs...,
+	)
+	if err != nil {
+		return PurgeResult{}, err
+	}
+	defer rows.Close()
+
+	paths := make([]string, 0)
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return PurgeResult{}, err
+		}
+		paths = append(paths, path)
+	}
+	if err := rows.Err(); err != nil {
+		return PurgeResult{}, err
+	}
+
+	res, err := s.db.ExecContext(
+		ctx,
+		fmt.Sprintf(`DELETE FROM job_runs WHERE %s`, whereClause),
+		deleteArgs...,
+	)
+	if err != nil {
+		return PurgeResult{}, err
+	}
+
+	deletedRuns, err := res.RowsAffected()
+	if err != nil {
+		return PurgeResult{}, err
+	}
+
+	deletedOutputFiles, err := s.deleteOrphanedPaths(ctx, paths)
+	if err != nil {
+		return PurgeResult{}, err
+	}
+
+	return PurgeResult{
+		DeletedRuns:        deletedRuns,
+		DeletedOutputFiles: deletedOutputFiles,
+	}, nil
+}
+
+func (s *Service) DeleteRunByID(ctx context.Context, runID string) (PurgeResult, error) {
+	runID = strings.TrimSpace(runID)
+	if runID == "" {
+		return PurgeResult{}, errors.New("run_id_required")
+	}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		`SELECT DISTINCT output_path
+		FROM job_runs
+		WHERE id = ? AND output_path IS NOT NULL AND output_path != ''`,
+		runID,
+	)
+	if err != nil {
+		return PurgeResult{}, err
+	}
+	defer rows.Close()
+
+	paths := make([]string, 0)
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return PurgeResult{}, err
+		}
+		paths = append(paths, path)
+	}
+	if err := rows.Err(); err != nil {
+		return PurgeResult{}, err
+	}
+
+	res, err := s.db.ExecContext(ctx, `DELETE FROM job_runs WHERE id = ?`, runID)
+	if err != nil {
+		return PurgeResult{}, err
+	}
+
+	deletedRuns, err := res.RowsAffected()
+	if err != nil {
+		return PurgeResult{}, err
+	}
+	if deletedRuns == 0 {
+		return PurgeResult{}, sql.ErrNoRows
+	}
+
+	deletedOutputFiles, err := s.deleteOrphanedPaths(ctx, paths)
+	if err != nil {
+		return PurgeResult{}, err
+	}
+
+	return PurgeResult{
+		DeletedRuns:        deletedRuns,
+		DeletedOutputFiles: deletedOutputFiles,
+	}, nil
+}
+
 func (s *Service) EnforceOutputLogCap(ctx context.Context, maxBytes int64) (LogCapResult, error) {
 	if maxBytes <= 0 {
 		return LogCapResult{}, errors.New("max_bytes_must_be_positive")

@@ -83,11 +83,33 @@ function formatBytes(value?: number) {
 }
 
 function parseAPIError(error: unknown) {
+  const knownErrors: Record<string, string> = {
+    internal_error: "Something went wrong on the local daemon. Please try again.",
+    job_not_found: "This job was not found. Refresh the page and try again.",
+    run_not_found: "This run was not found. Refresh run history and try again.",
+    run_id_required: "Run ID is required.",
+    scheduler_reload_failed: "The scheduler could not be reloaded. Please try once more.",
+    runner_unavailable: "Runner is not available right now. Restart Cronye and try again.",
+    older_than_days_must_be_positive: "Older than days must be greater than 0.",
+    keep_recent_must_be_non_negative: "Keep latest runs must be 0 or more.",
+    retention_days_must_be_positive: "Retention days must be greater than 0.",
+    max_log_bytes_must_be_positive: "Max log bytes must be greater than 0."
+  };
+
   if (error instanceof APIError) {
+    if (knownErrors[error.message]) return knownErrors[error.message];
+    if (error.message.startsWith("request_failed_")) {
+      return `Request failed (${error.status}). Please try again.`;
+    }
+    return error.message.replaceAll("_", " ");
+  }
+  if (error instanceof Error) {
+    if (error.name === "SyntaxError") {
+      return "Please check your JSON input. It must be valid JSON.";
+    }
     return error.message;
   }
-  if (error instanceof Error) return error.message;
-  return "unknown_error";
+  return "Unknown error. Please try again.";
 }
 
 function statusTone(status: string) {
@@ -96,6 +118,17 @@ function statusTone(status: string) {
   if (status === "queued") return "bg-amber-100 text-amber-800";
   if (status === "cancelled" || status === "skipped_overlap") return "bg-slate-200 text-slate-800";
   return "bg-red-100 text-red-800";
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
 }
 
 function jobToForm(job: Job): JobFormState {
@@ -144,7 +177,11 @@ function App() {
   const [runFilter, setRunFilter] = useState<RunFilter>("all");
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState<boolean>(false);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [jobForm, setJobForm] = useState<JobFormState>(buildDefaultForm());
+  const [runsViewLimit, setRunsViewLimit] = useState<number>(100);
+  const [runCleanupKeepRecent, setRunCleanupKeepRecent] = useState<number>(100);
+  const [runCleanupSuccessOnly, setRunCleanupSuccessOnly] = useState<boolean>(false);
   const [purgeDays, setPurgeDays] = useState<number>(30);
   const [purgeSuccessOnly, setPurgeSuccessOnly] = useState<boolean>(false);
   const [settingsDraft, setSettingsDraft] = useState({
@@ -152,7 +189,6 @@ function App() {
     max_log_bytes: 1_073_741_824,
     global_concurrency: 1 as 1 | 2
   });
-  const [alertWebhookDraft, setAlertWebhookDraft] = useState<string>("");
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
@@ -164,6 +200,10 @@ function App() {
     if (runFilter === "all") return runs;
     return runs.filter((run) => run.status === runFilter);
   }, [runs, runFilter]);
+
+  const visibleRuns = useMemo(() => {
+    return filteredRuns.slice(0, runsViewLimit);
+  }, [filteredRuns, runsViewLimit]);
 
   const loadHealth = useCallback(async () => {
     try {
@@ -202,10 +242,10 @@ function App() {
       max_log_bytes: currentSettings.max_log_bytes,
       global_concurrency: currentSettings.global_concurrency
     });
-    setAlertWebhookDraft(currentSettings.alert_webhook_url ?? "");
   }, []);
 
   const loadAll = useCallback(async () => {
+    setPendingAction("refresh");
     setBusy(true);
     setNotice(null);
     try {
@@ -217,6 +257,7 @@ function App() {
     } catch (error) {
       setNotice({ type: "error", text: parseAPIError(error) });
     } finally {
+      setPendingAction(null);
       setBusy(false);
     }
   }, [loadHealth, loadJobs, loadRuns, loadSettings, loadStorage, selectedJobId]);
@@ -260,6 +301,7 @@ function App() {
   const onSaveJob = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+      setPendingAction("job:save");
       setBusy(true);
       setNotice(null);
 
@@ -268,9 +310,15 @@ function App() {
         if (jobForm.type === "shell") {
           payload = { command: jobForm.shellCommand.trim() };
         } else {
-          const headers = jobForm.httpHeaders.trim()
-            ? (JSON.parse(jobForm.httpHeaders) as Record<string, string>)
-            : {};
+          let headers: Record<string, string> = {};
+          if (jobForm.httpHeaders.trim()) {
+            try {
+              headers = JSON.parse(jobForm.httpHeaders) as Record<string, string>;
+            } catch {
+              setNotice({ type: "error", text: "Headers must be valid JSON." });
+              return;
+            }
+          }
           payload = {
             method: jobForm.httpMethod.trim() || "GET",
             url: jobForm.httpURL.trim(),
@@ -292,19 +340,22 @@ function App() {
           overlap_policy: jobForm.overlapPolicy
         };
 
+        let targetJobID = selectedJobId;
         if (selectedJobId) {
           await api.updateJob(selectedJobId, req);
-          setNotice({ type: "info", text: "job_updated" });
+          setNotice({ type: "info", text: `Saved changes for "${jobForm.name.trim()}".` });
         } else {
           const created = await api.createJob(req);
           setSelectedJobId(created.id);
-          setNotice({ type: "info", text: "job_created" });
+          targetJobID = created.id;
+          setNotice({ type: "info", text: `Created "${jobForm.name.trim()}". You can run it now.` });
         }
         await loadJobs();
-        if (selectedJobId) await loadRuns(selectedJobId);
+        if (targetJobID) await loadRuns(targetJobID);
       } catch (error) {
         setNotice({ type: "error", text: parseAPIError(error) });
       } finally {
+        setPendingAction(null);
         setBusy(false);
       }
     },
@@ -313,6 +364,7 @@ function App() {
 
   const runNow = useCallback(
     async (jobID: string) => {
+      setPendingAction(`job:run:${jobID}`);
       setBusy(true);
       setNotice(null);
       try {
@@ -323,10 +375,11 @@ function App() {
         }
         await loadRuns(jobID);
         setSelectedRunId(response.run_id);
-        setNotice({ type: "info", text: "run_enqueued" });
+        setNotice({ type: "info", text: "Run queued. Open View to check output." });
       } catch (error) {
         setNotice({ type: "error", text: parseAPIError(error) });
       } finally {
+        setPendingAction(null);
         setBusy(false);
       }
     },
@@ -335,20 +388,22 @@ function App() {
 
   const pauseOrResume = useCallback(
     async (job: Job) => {
+      setPendingAction(`job:toggle:${job.id}`);
       setBusy(true);
       setNotice(null);
       try {
         if (job.enabled) {
           await api.pauseJob(job.id);
-          setNotice({ type: "info", text: "job_paused" });
+          setNotice({ type: "info", text: `"${job.name}" paused. Scheduled runs are stopped.` });
         } else {
           await api.resumeJob(job.id);
-          setNotice({ type: "info", text: "job_resumed" });
+          setNotice({ type: "info", text: `"${job.name}" resumed.` });
         }
         await loadJobs();
       } catch (error) {
         setNotice({ type: "error", text: parseAPIError(error) });
       } finally {
+        setPendingAction(null);
         setBusy(false);
       }
     },
@@ -358,16 +413,18 @@ function App() {
   const deleteJob = useCallback(
     async (jobID: string) => {
       if (!window.confirm("Delete this job and all related run history?")) return;
+      setPendingAction(`job:delete:${jobID}`);
       setBusy(true);
       setNotice(null);
       try {
         await api.deleteJob(jobID);
         if (selectedJobId === jobID) clearEditor();
         await loadJobs();
-        setNotice({ type: "info", text: "job_deleted" });
+        setNotice({ type: "info", text: "Job deleted." });
       } catch (error) {
         setNotice({ type: "error", text: parseAPIError(error) });
       } finally {
+        setPendingAction(null);
         setBusy(false);
       }
     },
@@ -376,18 +433,73 @@ function App() {
 
   const cancelRunning = useCallback(async () => {
     if (!selectedJobId) return;
+    setPendingAction("runs:cancel");
     setBusy(true);
     setNotice(null);
     try {
       const response = await api.cancelRunningByJob(selectedJobId);
       await loadRuns(selectedJobId);
-      setNotice({ type: "info", text: `cancelled_runs_${response.cancelled_runs}` });
+      if (response.cancelled_runs === 0) {
+        setNotice({ type: "info", text: "No running job was found to cancel." });
+      } else {
+        setNotice({
+          type: "info",
+          text: `Cancellation sent for ${response.cancelled_runs} running execution(s).`
+        });
+      }
     } catch (error) {
       setNotice({ type: "error", text: parseAPIError(error) });
     } finally {
+      setPendingAction(null);
       setBusy(false);
     }
   }, [loadRuns, selectedJobId]);
+
+  const refreshRuns = useCallback(async () => {
+    if (!selectedJobId) return;
+    setPendingAction("runs:refresh");
+    setBusy(true);
+    try {
+      await loadRuns(selectedJobId);
+    } catch (error) {
+      setNotice({ type: "error", text: parseAPIError(error) });
+    } finally {
+      setPendingAction(null);
+      setBusy(false);
+    }
+  }, [loadRuns, selectedJobId]);
+
+  const deleteRun = useCallback(
+    async (runID: string) => {
+      const confirmed = window.confirm("Delete this run from history?");
+      if (!confirmed) return;
+
+      setPendingAction(`run:delete:${runID}`);
+      setBusy(true);
+      setNotice(null);
+      try {
+        const result = await api.deleteRun(runID);
+        if (selectedRunId === runID) {
+          setSelectedRunId(null);
+          setRunOutput("");
+        }
+        if (selectedJobId) {
+          await loadRuns(selectedJobId);
+        }
+        await loadStorage();
+        setNotice({
+          type: "info",
+          text: `Removed 1 run from history${result.deleted_output_files > 0 ? " and cleaned output file." : "."}`
+        });
+      } catch (error) {
+        setNotice({ type: "error", text: parseAPIError(error) });
+      } finally {
+        setPendingAction(null);
+        setBusy(false);
+      }
+    },
+    [loadRuns, loadStorage, selectedJobId, selectedRunId]
+  );
 
   const loadRunOutput = useCallback(async (runID: string) => {
     setSelectedRunId(runID);
@@ -401,6 +513,7 @@ function App() {
   }, []);
 
   const onPurge = useCallback(async () => {
+    setPendingAction("storage:purge");
     setBusy(true);
     setNotice(null);
     try {
@@ -412,16 +525,58 @@ function App() {
       if (selectedJobId) await loadRuns(selectedJobId);
       setNotice({
         type: "info",
-        text: `purged_runs_${result.deleted_runs}_files_${result.deleted_output_files}`
+        text: `Purged ${result.deleted_runs} runs and ${result.deleted_output_files} output file(s).`
       });
     } catch (error) {
       setNotice({ type: "error", text: parseAPIError(error) });
     } finally {
+      setPendingAction(null);
       setBusy(false);
     }
   }, [loadJobs, loadRuns, loadStorage, purgeDays, purgeSuccessOnly, selectedJobId]);
 
+  const onPurgeJobRuns = useCallback(async () => {
+    if (!selectedJobId) return;
+    if (runCleanupKeepRecent < 0) {
+      setNotice({ type: "error", text: "Keep latest runs must be 0 or more." });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `This will remove old run history and keep the latest ${runCleanupKeepRecent} run(s) for this job. Continue?`
+    );
+    if (!confirmed) return;
+
+    setPendingAction("runs:cleanup");
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await api.purgeJobRuns(selectedJobId, {
+        keep_recent: runCleanupKeepRecent,
+        success_only: runCleanupSuccessOnly
+      });
+      await Promise.all([loadRuns(selectedJobId), loadStorage()]);
+      if (result.deleted_runs === 0) {
+        setNotice({
+          type: "info",
+          text: `Nothing to clean. Already keeping the latest ${runCleanupKeepRecent} run(s).`
+        });
+      } else {
+        setNotice({
+          type: "info",
+          text: `Removed ${result.deleted_runs} old run(s). Keeping latest ${runCleanupKeepRecent}.`
+        });
+      }
+    } catch (error) {
+      setNotice({ type: "error", text: parseAPIError(error) });
+    } finally {
+      setPendingAction(null);
+      setBusy(false);
+    }
+  }, [loadRuns, loadStorage, runCleanupKeepRecent, runCleanupSuccessOnly, selectedJobId]);
+
   const onSaveRetention = useCallback(async () => {
+    setPendingAction("settings:retention");
     setBusy(true);
     setNotice(null);
     try {
@@ -434,58 +589,14 @@ function App() {
         startup_catchup: previous?.startup_catchup
       }));
       await loadStorage();
-      setNotice({ type: "info", text: "settings_updated" });
+      setNotice({ type: "info", text: "Retention settings saved." });
     } catch (error) {
       setNotice({ type: "error", text: parseAPIError(error) });
     } finally {
+      setPendingAction(null);
       setBusy(false);
     }
   }, [loadStorage, settingsDraft]);
-
-  const onSaveAlerts = useCallback(async () => {
-    setBusy(true);
-    setNotice(null);
-    try {
-      const saved = await api.updateAlertsSettings(alertWebhookDraft.trim());
-      setSettings((previous) =>
-        previous
-          ? { ...previous, alert_webhook_url: saved.alert_webhook_url }
-          : {
-              retention_days: settingsDraft.retention_days,
-              max_log_bytes: settingsDraft.max_log_bytes,
-              global_concurrency: settingsDraft.global_concurrency,
-              alert_webhook_url: saved.alert_webhook_url,
-              startup_catchup: undefined
-            }
-      );
-      setNotice({ type: "info", text: "alert_webhook_updated" });
-    } catch (error) {
-      setNotice({ type: "error", text: parseAPIError(error) });
-    } finally {
-      setBusy(false);
-    }
-  }, [alertWebhookDraft, settingsDraft]);
-
-  const loadExampleShellJob = useCallback(() => {
-    setJobForm((previous) => ({
-      ...previous,
-      name: "Every 5 min health check",
-      type: "shell",
-      schedule: "*/5 * * * *",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-      enabled: true,
-      timeoutSec: 60,
-      retryMax: 1,
-      retryBackoffSec: 10,
-      overlapPolicy: "skip",
-      shellCommand: "echo \"Cronye is running\"",
-      httpMethod: "GET",
-      httpURL: "",
-      httpHeaders: "{}",
-      httpBody: ""
-    }));
-    setNotice({ type: "info", text: "example_job_loaded" });
-  }, []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_90%_5%,#d4ede9,transparent_28%),radial-gradient(circle_at_10%_20%,#dce7f5,transparent_30%),#eef4f8] text-ink">
@@ -501,7 +612,7 @@ function App() {
             disabled={busy}
             type="button"
           >
-            Refresh
+            {pendingAction === "refresh" ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </header>
@@ -511,18 +622,11 @@ function App() {
           <section className="rounded-2xl border border-edge bg-panel p-4 shadow-card">
             <h2 className="mb-3 font-display text-xl">Quick Start</h2>
             <ol className="space-y-2 text-sm text-slate">
-              <li>1. Click <strong>Load Example Job</strong> or fill the form manually.</li>
+              <li>1. Fill the form manually.</li>
               <li>2. Click <strong>Create Job</strong>.</li>
               <li>3. In the Jobs list, click <strong>Run now</strong>.</li>
               <li>4. Open <strong>Run History</strong> and click <strong>View</strong> to see output.</li>
             </ol>
-            <button
-              className="mt-3 rounded-xl border border-edge px-3 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
-              onClick={loadExampleShellJob}
-              type="button"
-            >
-              Load Example Job
-            </button>
           </section>
 
           <section className="rounded-2xl border border-edge bg-panel p-4 shadow-card">
@@ -568,32 +672,41 @@ function App() {
                     <button
                       type="button"
                       className="rounded-full border border-edge px-2 py-1 text-[11px] hover:border-accent hover:text-accent"
+                      disabled={busy}
                       onClick={(event) => {
                         event.stopPropagation();
                         void runNow(job.id);
                       }}
                     >
-                      Run now
+                      {pendingAction === `job:run:${job.id}` ? "Queueing..." : "Run now"}
                     </button>
                     <button
                       type="button"
                       className="rounded-full border border-edge px-2 py-1 text-[11px] hover:border-accent hover:text-accent"
+                      disabled={busy}
                       onClick={(event) => {
                         event.stopPropagation();
                         void pauseOrResume(job);
                       }}
                     >
-                      {job.enabled ? "Pause" : "Resume"}
+                      {pendingAction === `job:toggle:${job.id}`
+                        ? job.enabled
+                          ? "Pausing..."
+                          : "Resuming..."
+                        : job.enabled
+                          ? "Pause"
+                          : "Resume"}
                     </button>
                     <button
                       type="button"
                       className="rounded-full border border-red-300 px-2 py-1 text-[11px] text-danger hover:bg-red-50"
+                      disabled={busy}
                       onClick={(event) => {
                         event.stopPropagation();
                         void deleteJob(job.id);
                       }}
                     >
-                      Delete
+                      {pendingAction === `job:delete:${job.id}` ? "Deleting..." : "Delete job"}
                     </button>
                   </div>
                 </button>
@@ -801,7 +914,13 @@ function App() {
                 disabled={busy}
                 className="w-full rounded-xl bg-accent px-4 py-2 font-semibold text-white hover:bg-accentStrong disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {selectedJobId ? "Save Changes" : "Create Job"}
+                {pendingAction === "job:save"
+                  ? selectedJobId
+                    ? "Saving..."
+                    : "Creating..."
+                  : selectedJobId
+                    ? "Save Changes"
+                    : "Create Job"}
               </button>
             </form>
           </section>
@@ -844,6 +963,17 @@ function App() {
                 <div className="flex gap-2">
                   <select
                     className="rounded-xl border border-edge px-3 py-2 text-sm"
+                    value={runsViewLimit}
+                    onChange={(event) => setRunsViewLimit(Number(event.target.value))}
+                  >
+                    <option value={25}>show 25</option>
+                    <option value={50}>show 50</option>
+                    <option value={100}>show 100</option>
+                    <option value={200}>show 200</option>
+                    <option value={500}>show 500</option>
+                  </select>
+                  <select
+                    className="rounded-xl border border-edge px-3 py-2 text-sm"
                     value={runFilter}
                     onChange={(event) => setRunFilter(event.target.value as RunFilter)}
                   >
@@ -856,22 +986,55 @@ function App() {
                   </select>
                   <button
                     className="rounded-xl border border-edge px-3 py-2 text-sm hover:border-accent hover:text-accent"
-                    onClick={() => selectedJobId && void loadRuns(selectedJobId)}
+                    onClick={() => void refreshRuns()}
                     type="button"
-                    disabled={!selectedJobId}
+                    disabled={!selectedJobId || busy}
                   >
-                    Refresh runs
+                    {pendingAction === "runs:refresh" ? "Refreshing..." : "Refresh runs"}
                   </button>
                   <button
                     className="rounded-xl border border-red-300 px-3 py-2 text-sm text-danger hover:bg-red-50"
                     onClick={() => void cancelRunning()}
                     type="button"
-                    disabled={!selectedJobId}
+                    disabled={!selectedJobId || busy}
                   >
-                    Cancel running
+                    {pendingAction === "runs:cancel" ? "Cancelling..." : "Cancel active run"}
                   </button>
                 </div>
               </div>
+
+              {selectedJob && (
+                <div className="mb-3 rounded-xl border border-edge bg-white p-3">
+                  <div className="grid gap-2 md:grid-cols-[170px_1fr_auto]">
+                    <label className="block text-sm">
+                      <span className="mb-1 block text-slate">Keep latest runs</span>
+                      <input
+                        className="w-full rounded-xl border border-edge px-3 py-2"
+                        type="number"
+                        min={0}
+                        value={runCleanupKeepRecent}
+                        onChange={(event) => setRunCleanupKeepRecent(Number(event.target.value))}
+                      />
+                    </label>
+                    <label className="mt-6 flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={runCleanupSuccessOnly}
+                        onChange={(event) => setRunCleanupSuccessOnly(event.target.checked)}
+                      />
+                      <span>Clean only successful runs</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="mt-6 rounded-xl border border-edge px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
+                      onClick={() => void onPurgeJobRuns()}
+                      disabled={busy}
+                    >
+                      {pendingAction === "runs:cleanup" ? "Cleaning..." : "Clean history"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {!selectedJob ? (
                 <div className="rounded-xl border border-edge bg-white p-3 text-sm text-slate">
@@ -881,74 +1044,98 @@ function App() {
                 </div>
               ) : (
                 <div className="grid gap-4 xl:grid-cols-[1.25fr_1fr]">
-                  <div className="overflow-hidden rounded-xl border border-edge">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-mist">
-                        <tr>
-                          <th className="px-3 py-2">status</th>
-                          <th className="px-3 py-2">attempt</th>
-                          <th className="px-3 py-2">started</th>
-                          <th className="px-3 py-2">duration</th>
-                          <th className="px-3 py-2">output</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRuns.map((run) => (
-                          <tr
-                            key={run.id}
-                            className={`cursor-pointer border-t border-edge hover:bg-mist/50 ${
-                              selectedRunId === run.id ? "bg-mist/80" : ""
-                            }`}
-                            onClick={() => {
-                              setSelectedRunId(run.id);
-                              setRunOutput(run.output_tail ?? "");
-                            }}
-                          >
-                            <td className="px-3 py-2">
-                              <span className={`rounded-full px-2 py-0.5 text-xs ${statusTone(run.status)}`}>
-                                {run.status}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2">{run.attempt}</td>
-                            <td className="px-3 py-2">{formatDate(run.started_at || run.scheduled_at)}</td>
-                            <td className="px-3 py-2">
-                              {run.duration_ms !== null && run.duration_ms !== undefined
-                                ? `${run.duration_ms} ms`
-                                : "-"}
-                            </td>
-                            <td className="px-3 py-2">
-                              <button
-                                type="button"
-                                className="rounded-lg border border-edge px-2 py-1 text-xs hover:border-accent hover:text-accent"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  void loadRunOutput(run.id);
-                                }}
-                              >
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                        {filteredRuns.length === 0 && (
+                  <div>
+                    <div className="overflow-x-auto overflow-y-hidden rounded-xl border border-edge">
+                      <table className="min-w-[720px] w-full text-left text-sm">
+                        <thead className="bg-mist">
                           <tr>
-                            <td className="px-3 py-4 text-slate" colSpan={5}>
-                              No runs for this filter.
-                            </td>
+                            <th className="px-3 py-2">status</th>
+                            <th className="px-3 py-2">attempt</th>
+                            <th className="px-3 py-2">started</th>
+                            <th className="px-3 py-2">duration</th>
+                            <th className="px-3 py-2">actions</th>
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {visibleRuns.map((run) => (
+                            <tr
+                              key={run.id}
+                              className={`cursor-pointer border-t border-edge hover:bg-mist/50 ${
+                                selectedRunId === run.id ? "bg-mist/80" : ""
+                              }`}
+                              onClick={() => {
+                                setSelectedRunId(run.id);
+                                setRunOutput(run.output_tail ?? "");
+                              }}
+                            >
+                              <td className="px-3 py-2">
+                                <span className={`rounded-full px-2 py-0.5 text-xs ${statusTone(run.status)}`}>
+                                  {run.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2">{run.attempt}</td>
+                              <td className="px-3 py-2">{formatDate(run.started_at || run.scheduled_at)}</td>
+                              <td className="px-3 py-2">
+                                {run.duration_ms !== null && run.duration_ms !== undefined
+                                  ? `${run.duration_ms} ms`
+                                  : "-"}
+                              </td>
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    className="rounded-lg border border-edge px-2 py-1 text-xs hover:border-accent hover:text-accent"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void loadRunOutput(run.id);
+                                    }}
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Delete run"
+                                    title="Delete this run"
+                                    className="rounded-lg border border-red-300 p-1.5 text-danger hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void deleteRun(run.id);
+                                    }}
+                                    disabled={busy}
+                                  >
+                                    {pendingAction === `run:delete:${run.id}` ? "..." : <TrashIcon />}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {visibleRuns.length === 0 && (
+                            <tr>
+                              <td className="px-3 py-4 text-slate" colSpan={5}>
+                                No runs for this filter.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="mt-2 text-xs text-slate">
+                      Showing {visibleRuns.length} of {filteredRuns.length} run(s).
+                    </p>
                   </div>
 
                   <article className="rounded-xl border border-edge p-3">
                     <h3 className="mb-2 font-semibold">Run Output</h3>
                     {selectedRunId ? (
                       <>
-                        <p className="mb-2 text-xs text-slate">run id: {selectedRunId}</p>
-                        <pre className="max-h-[420px] overflow-auto rounded-lg bg-[#0f1721] p-3 text-xs text-slate-100">
-                          {runOutput || "No output captured yet."}
-                        </pre>
+                        {runOutput.trim() && (
+                          <>
+                            <p className="mb-2 text-xs text-slate">run id: {selectedRunId}</p>
+                            <pre className="max-h-[420px] overflow-auto rounded-lg bg-[#0f1721] p-3 text-xs text-slate-100">
+                              {runOutput}
+                            </pre>
+                          </>
+                        )}
                       </>
                     ) : (
                       <p className="text-slate">Select a run and click View output.</p>
@@ -999,10 +1186,11 @@ function App() {
                 </label>
                 <button
                   type="button"
-                  className="mt-6 rounded-xl bg-accent px-4 py-2 font-semibold text-white hover:bg-accentStrong"
+                  className="mt-6 rounded-xl bg-accent px-4 py-2 font-semibold text-white hover:bg-accentStrong disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => void onPurge()}
+                  disabled={busy}
                 >
-                  Purge now
+                  {pendingAction === "storage:purge" ? "Purging..." : "Purge now"}
                 </button>
               </div>
             </section>
@@ -1100,33 +1288,12 @@ function App() {
 
               <button
                 type="button"
-                className="mt-3 rounded-xl bg-accent px-4 py-2 font-semibold text-white hover:bg-accentStrong"
+                className="mt-3 rounded-xl bg-accent px-4 py-2 font-semibold text-white hover:bg-accentStrong disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => void onSaveRetention()}
+                disabled={busy}
               >
-                Save retention settings
+                {pendingAction === "settings:retention" ? "Saving..." : "Save retention settings"}
               </button>
-
-              <div className="mt-5 border-t border-edge pt-4">
-                <label className="block text-sm">
-                  <span className="mb-1 block text-slate">Failure alert webhook URL</span>
-                  <input
-                    className="w-full rounded-xl border border-edge px-3 py-2"
-                    value={alertWebhookDraft}
-                    onChange={(event) => setAlertWebhookDraft(event.target.value)}
-                    placeholder="https://example.com/webhook"
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="mt-3 rounded-xl bg-accent px-4 py-2 font-semibold text-white hover:bg-accentStrong"
-                  onClick={() => void onSaveAlerts()}
-                >
-                  Save alert webhook
-                </button>
-                <p className="mt-2 text-xs text-slate">
-                  Current: {settings?.alert_webhook_url ? settings.alert_webhook_url : "(not set)"}
-                </p>
-              </div>
 
             </section>
           )}

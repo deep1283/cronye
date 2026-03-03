@@ -394,6 +394,74 @@ func TestIntegrationLifecycleAndMaintenanceEvents(t *testing.T) {
 	})
 }
 
+func TestIntegrationPurgeJobRunHistoryEndpoint(t *testing.T) {
+	t.Parallel()
+	h := setupIntegrationHarness(t)
+
+	createResp := requestJSON(t, h.router, http.MethodPost, "/jobs", map[string]any{
+		"name":              "Run History Purge",
+		"type":              "shell",
+		"schedule":          "*/20 * * * *",
+		"timezone":          "UTC",
+		"enabled":           true,
+		"payload":           map[string]any{"command": shellSuccessCommand()},
+		"timeout_sec":       10,
+		"retry_max":         0,
+		"retry_backoff_sec": 1,
+		"overlap_policy":    "skip",
+	}, http.StatusCreated)
+	jobID := mustString(t, createResp["id"])
+
+	for i := 0; i < 4; i++ {
+		runResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/run", nil, http.StatusAccepted)
+		runID := mustString(t, runResp["run_id"])
+		waitForRunStatus(t, h.router, runID, []string{"success"}, 20*time.Second)
+	}
+
+	purgeResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/runs/purge", map[string]any{
+		"keep_recent": 2,
+	}, http.StatusOK)
+	if mustInt(t, purgeResp["deleted_runs"]) < 2 {
+		t.Fatalf("expected at least 2 deleted runs, got %v", purgeResp["deleted_runs"])
+	}
+
+	runsResp := requestJSON(t, h.router, http.MethodGet, "/jobs/"+jobID+"/runs", nil, http.StatusOK)
+	items := mustArray(t, runsResp["runs"])
+	if len(items) != 2 {
+		t.Fatalf("expected exactly 2 runs after purge, got %d", len(items))
+	}
+}
+
+func TestIntegrationDeleteSingleRunEndpoint(t *testing.T) {
+	t.Parallel()
+	h := setupIntegrationHarness(t)
+
+	createResp := requestJSON(t, h.router, http.MethodPost, "/jobs", map[string]any{
+		"name":              "Delete Single Run",
+		"type":              "shell",
+		"schedule":          "*/20 * * * *",
+		"timezone":          "UTC",
+		"enabled":           true,
+		"payload":           map[string]any{"command": shellSuccessCommand()},
+		"timeout_sec":       10,
+		"retry_max":         0,
+		"retry_backoff_sec": 1,
+		"overlap_policy":    "skip",
+	}, http.StatusCreated)
+	jobID := mustString(t, createResp["id"])
+
+	runResp := requestJSON(t, h.router, http.MethodPost, "/jobs/"+jobID+"/run", nil, http.StatusAccepted)
+	runID := mustString(t, runResp["run_id"])
+	waitForRunStatus(t, h.router, runID, []string{"success"}, 20*time.Second)
+
+	deleteResp := requestJSON(t, h.router, http.MethodDelete, "/runs/"+runID, nil, http.StatusOK)
+	if mustInt(t, deleteResp["deleted_runs"]) != 1 {
+		t.Fatalf("expected 1 deleted run, got %v", deleteResp["deleted_runs"])
+	}
+
+	requestJSON(t, h.router, http.MethodGet, "/runs/"+runID, nil, http.StatusNotFound)
+}
+
 func waitForRunStatus(t *testing.T, router http.Handler, runID string, accepted []string, timeout time.Duration) map[string]any {
 	t.Helper()
 

@@ -87,6 +87,11 @@ type purgeRequest struct {
 	SuccessOnly   bool `json:"success_only"`
 }
 
+type jobRunPurgeRequest struct {
+	KeepRecent  int  `json:"keep_recent"`
+	SuccessOnly bool `json:"success_only"`
+}
+
 type retentionRequest struct {
 	RetentionDays     *int   `json:"retention_days"`
 	MaxLogBytes       *int64 `json:"max_log_bytes"`
@@ -395,6 +400,50 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	})
 
+	r.Post("/jobs/{id}/runs/purge", func(w http.ResponseWriter, r *http.Request) {
+		jobID := chi.URLParam(r, "id")
+		_, err := deps.Jobs.GetByID(r.Context(), jobID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "job_not_found"})
+				return
+			}
+			deps.Logger.Error("job run purge lookup failed", "job_id", jobID, "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+
+		var req jobRunPurgeRequest
+		if err := decodeJSON(r, &req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		if req.KeepRecent < 0 {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "keep_recent_must_be_non_negative"})
+			return
+		}
+
+		result, err := deps.Maintenance.PurgeJobRunsKeepRecent(r.Context(), jobID, req.KeepRecent, req.SuccessOnly)
+		if err != nil {
+			deps.Logger.Error("purge job runs failed", "job_id", jobID, "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+
+		emitEvent(r.Context(), deps, "info", "maintenance", "job_run_history_purged", map[string]any{
+			"job_id":               jobID,
+			"keep_recent":          req.KeepRecent,
+			"success_only":         req.SuccessOnly,
+			"deleted_runs":         result.DeletedRuns,
+			"deleted_output_files": result.DeletedOutputFiles,
+		})
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"deleted_runs":         result.DeletedRuns,
+			"deleted_output_files": result.DeletedOutputFiles,
+		})
+	})
+
 	r.Get("/jobs/{id}/runs", func(w http.ResponseWriter, r *http.Request) {
 		jobID := chi.URLParam(r, "id")
 		_, err := deps.Jobs.GetByID(r.Context(), jobID)
@@ -432,6 +481,30 @@ func NewRouter(deps Dependencies) http.Handler {
 		}
 
 		writeJSON(w, http.StatusOK, item)
+	})
+
+	r.Delete("/runs/{id}", func(w http.ResponseWriter, r *http.Request) {
+		runID := chi.URLParam(r, "id")
+		result, err := deps.Maintenance.DeleteRunByID(r.Context(), runID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "run_not_found"})
+				return
+			}
+			deps.Logger.Error("delete run failed", "run_id", runID, "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal_error"})
+			return
+		}
+
+		emitEvent(r.Context(), deps, "info", "maintenance", "single_run_deleted", map[string]any{
+			"run_id":               runID,
+			"deleted_runs":         result.DeletedRuns,
+			"deleted_output_files": result.DeletedOutputFiles,
+		})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"deleted_runs":         result.DeletedRuns,
+			"deleted_output_files": result.DeletedOutputFiles,
+		})
 	})
 
 	r.Get("/runs/{id}/output", func(w http.ResponseWriter, r *http.Request) {

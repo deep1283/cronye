@@ -8,7 +8,7 @@ Week 1 scope currently implemented:
 - Startup catch-up that replays missed cron windows since last scheduler heartbeat (deduped by `job_id + scheduled_at`)
 - Local API with `GET /health`
 - Job APIs: `GET /jobs`, `POST /jobs`, `GET /jobs/:id`, `PUT /jobs/:id`, `POST /jobs/:id/run`, `POST /jobs/:id/cancel-running`, `POST /jobs/:id/pause`, `POST /jobs/:id/resume`, `DELETE /jobs/:id`
-- Run APIs: `GET /jobs/:id/runs`, `GET /runs/:id`, `GET /runs/:id/output`
+- Run APIs: `GET /jobs/:id/runs`, `POST /jobs/:id/runs/purge`, `GET /runs/:id`, `DELETE /runs/:id`, `GET /runs/:id/output`
 - Runner: executes queued shell/http runs with timeout + output tail capture
 - Retry: exponential backoff with jitter (per-job `retry_max` / `retry_backoff_sec`)
 - Failed-run full output is persisted to `var/run-outputs/` and linked via `output_path`

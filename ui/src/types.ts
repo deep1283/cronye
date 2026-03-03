@@ -84,11 +84,21 @@ export interface PurgePayload {
   success_only: boolean;
 }
 
+export interface JobRunHistoryPurgePayload {
+  keep_recent: number;
+  success_only: boolean;
+}
+
 export interface PurgeResult {
   deleted_runs: number;
   deleted_output_files: number;
   cap_deleted_output_files: number;
   cap_freed_bytes: number;
+}
+
+export interface DeleteRunResult {
+  deleted_runs: number;
+  deleted_output_files: number;
 }
 
 export interface RunNowResult {
