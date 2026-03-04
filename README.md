@@ -26,7 +26,7 @@ This project is open source under the [MIT License](./LICENSE).
 
 Reliable automations on your own machine, without cloud lock-in.
 
-## MVP Scope
+## Scope
 
 - Cron scheduling
 - Startup catch-up for missed schedules after downtime
@@ -35,12 +35,7 @@ Reliable automations on your own machine, without cloud lock-in.
 - Local web UI served from daemon
 - Localhost API only by default
 
-Non-goals in MVP:
 
-- Drag-and-drop workflow builder
-- Team collaboration
-- Mobile runtime
-- Deep AI agent features
 
 ## Architecture (MVP)
 
