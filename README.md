@@ -4,6 +4,16 @@ Run cron jobs locally on your Mac, no cloud, no subscriptions, with a clean web 
 
 ⭐ If this helps you, star the repo — and if you want to sponsor a lavender cream matcha at Starbucks, even better 😅
 
+Website: [https://cronye.vercel.app/](https://cronye.vercel.app/)
+
+## Quick Install (macOS Apple Silicon)
+
+1. Open [https://cronye.vercel.app/](https://cronye.vercel.app/) and click download.
+2. Drag `Cronye.app` to `Applications`.
+3. Open `Cronye.app`.
+4. If macOS blocks first launch, go to `System Settings -> Privacy & Security` and click `Open Anyway`.
+5. Cronye starts locally and opens the UI at `http://127.0.0.1:9480`.
+
 ## Screenshot
 
 ![Cronye Local UI](docs/assets/cronye-ui.png)
@@ -69,14 +79,6 @@ Then check:
 ```bash
 curl http://127.0.0.1:9480/health
 ```
-
-## Quick Install (macOS Apple Silicon)
-
-1. Open [Releases](https://github.com/deep1283/cronye/releases) and download the latest `cronye-macos.dmg`.
-2. Drag `Cronye.app` to `Applications`.
-3. Open `Cronye.app`.
-4. If macOS blocks first launch, go to `System Settings -> Privacy & Security` and click `Open Anyway`.
-5. Cronye starts locally and opens the UI at `http://127.0.0.1:9480`.
 
 ## Build Synced Release Bundle (UI + Daemon)
 
