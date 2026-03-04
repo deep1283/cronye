@@ -2,7 +2,7 @@
 
 Run cron jobs locally on your Mac, no cloud, no subscriptions, with a clean web UI and reliable scheduling.
 
-⭐ Star this repo if you find it useful.
+⭐ If this helps you, star the repo — and if you want to sponsor a lavender cream matcha at Starbucks, even better 😅
 
 ## Screenshot
 
