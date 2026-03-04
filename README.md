@@ -78,7 +78,7 @@ curl http://127.0.0.1:9480/health
 ## Build Synced Release Bundle (UI + Daemon)
 
 ```bash
-make release VERSION=0.1.0
+make release VERSION=v0.1.12
 ```
 
 This command:
@@ -98,19 +98,19 @@ Bundle layout:
 Optional signed host build:
 
 ```bash
-make release-signed VERSION=0.1.0 SIGNING_KEY_PATH=/abs/path/private.pem
+make release-signed VERSION=v0.1.12 SIGNING_KEY_PATH=/abs/path/private.pem
 ```
 
 Host target release-all helper:
 
 ```bash
-make release-all VERSION=0.1.0
+make release-all VERSION=v0.1.12
 ```
 
 Cross-OS matrix helper (typically for CI with native runners):
 
 ```bash
-make release-matrix VERSION=0.1.0
+make release-matrix VERSION=v0.1.12
 ```
 
 ## Build macOS Installer DMG (Apple Silicon)
@@ -118,13 +118,13 @@ make release-matrix VERSION=0.1.0
 Create a user-facing installer (`Cronye.app` + drag-to-Applications DMG):
 
 ```bash
-make package-macos-dmg VERSION=0.1.0
+make package-macos-dmg VERSION=v0.1.12
 ```
 
 Output:
 
-- `dist/release/0.1.0-darwin-arm64/cronye-macos.dmg`
-- `dist/release/0.1.0-darwin-arm64/cronye-macos.dmg.sha256`
+- `dist/release/v0.1.12-darwin-arm64/cronye-macos.dmg`
+- `dist/release/v0.1.12-darwin-arm64/cronye-macos.dmg.sha256`
 
 Notes:
 
