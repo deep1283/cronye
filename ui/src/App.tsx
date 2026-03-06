@@ -47,7 +47,7 @@ function buildDefaultForm(): JobFormState {
   return {
     name: "",
     type: "shell",
-    schedule: "*/5 * * * *",
+    schedule: "0 * * * *",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     enabled: true,
     timeoutSec: 300,
@@ -773,7 +773,7 @@ function App() {
                   required
                 />
                 <p className="mt-1 text-xs text-slate">
-                  Example: <code>*/5 * * * *</code> runs every 5 minutes.
+                  Example: <code>0 * * * *</code> runs once every hour.
                 </p>
               </label>
 
